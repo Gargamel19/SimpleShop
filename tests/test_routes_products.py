@@ -11,7 +11,7 @@ from flask_testing import TestCase
 public_id_persistant_user = str(uuid.uuid4())
 public_id_persistant_admin = str(uuid.uuid4())
 
-class UserTest(TestCase):
+class ProductTest(TestCase):
 
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test_db.sqlite'
