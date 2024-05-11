@@ -20,6 +20,6 @@ jobs:
           
       - name: run tests # run main.py
         working-directory: .
-        run: python -m pytest --cache-clear --cov=app tests/ > pytest-coverage.txt
+        run: python -m pytest . --cache-clear --cov=app > pytest-coverage.txt
       - name: Comment coverage
         uses: coroo/pytest-coverage-commentator@v1.0.2
