@@ -11,7 +11,7 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7.1' # install the python version needed
+          python-version: '3.7' # install the python version needed
           
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v4
