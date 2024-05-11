@@ -19,5 +19,5 @@ jobs:
               path: "requirements.txt"
           
       - name: run tests # run main.py
-        working-directory: tests
+        working-directory: .
         run: python -m pytest .
