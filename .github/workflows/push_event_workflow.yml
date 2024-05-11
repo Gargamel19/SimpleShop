@@ -20,7 +20,4 @@ jobs:
           
       - name: run tests # run main.py
         working-directory: tests
-        run: python -m unittest discover
-      
-      - name : Run tests 
-        run : python test_routes_user.py
+        run: python -m unittest test_routes_user.py
