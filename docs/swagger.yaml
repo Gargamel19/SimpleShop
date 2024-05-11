@@ -15,7 +15,7 @@ info:
   termsOfService: http://swagger.io/terms/
   version: 1.0.0
 externalDocs:
-  description: Find out more about Swagger
+  description: Find out more about Swagge
   url: http://swagger.io
 servers:
   - url: http://localhost:5005
