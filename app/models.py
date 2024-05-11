@@ -29,3 +29,33 @@ class User(db.Model, UserMixin, SerializerMixin):
             "email": self.email,
             "user_type": self.user_type
         }
+    
+
+class Products(db.Model, SerializerMixin):
+    __tablename__ = "product"
+    id = Column(Integer, primary_key=True) # primary keys are required by SQLAlchemy
+    public_id = Column(String(50), unique=True) # primary keys are required by SQLAlchemy
+    title = Column(String(1000), unique=True)
+    price = Column(Integer, nullable=False)
+    stock = Column(Integer, nullable=False)
+    
+    def get_as_obj(self):
+        return {
+            "public_id": self.public_id,
+            "title": self.title,
+            "price": self.price,
+            "stock": self.stock
+        }
+    
+class Suppliers(db.Model, SerializerMixin):
+    __tablename__ = "suppliers"
+    id = Column(Integer, primary_key=True) # primary keys are required by SQLAlchemy
+    public_id = Column(String(50), unique=True) # primary keys are required by SQLAlchemy
+    title = Column(String(1000), unique=True)
+    product = Column(String(1000), unique=True)
+    
+    def get_as_obj(self):
+        return {
+            "public_id": self.public_id,
+            "title": self.title
+        }

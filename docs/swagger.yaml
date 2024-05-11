@@ -154,10 +154,283 @@ paths:
           description: User dose not exist.
         '405':
           description: Function not allowed
-  
+  # PRODUCTS
+  /products:
+    get:
+      tags:
+        - product
+      summary: Get All Products
+      operationId: getProducts
+      responses:
+        '200':
+          description: successful receved products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    post:
+      tags:
+        - product
+      summary: Create Product
+      description: This can only be done by the logged in admin.
+      operationId: createProduct
+      requestBody:
+        description: Created product object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDummy'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Product dose already exist.
+  /products/{id}:
+    get:
+      tags:
+        - product
+      summary: Get product by ID
+      description: This can only be done by the logged in admin.
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Product that need to be updated
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product dose not exist.
+        '405':
+          description: Function not allowed
+    put:
+      tags:
+        - product
+      summary: edit product
+      description: This can only be done by the logged in admin.
+      operationId: editProduct
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Product that need to be updated
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Created product object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDummy'
+      responses:
+        '200':
+          description: successful deleted Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product dose not exist.
+        '405':
+          description: Function not allowed
+    delete:
+      tags:
+        - product
+      summary: delete product
+      description: This can only be done by the logged in admin.
+      operationId: deleteProduct
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Product that need to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product dose not exist.
+        '405':
+          description: Function not allowed
+  # SUPPLIER
+  /supplier:
+    get:
+      tags:
+        - supplier
+      summary: Get All Suppliers
+      operationId: getSuppliers
+      responses:
+        '200':
+          description: successful receved Suppliers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+    post:
+      tags:
+        - supplier
+      summary: Create Supplier
+      description: This can only be done by the logged in admin.
+      operationId: createSupplier
+      requestBody:
+        description: Created Supplier object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierDummy'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '400':
+          description: Supplier dose already exist.
+  /supplier/{id}:
+    get:
+      tags:
+        - supplier
+      summary: Get Supplier by ID
+      description: This can only be done by the logged in admin.
+      operationId: getSupplier
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Supplier that need to be updated
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Supplier dose not exist.
+        '405':
+          description: Function not allowed
+    put:
+      tags:
+        - supplier
+      summary: edit Supplier
+      description: This can only be done by the logged in admin.
+      operationId: editSupplier
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Supplier that need to be updated
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Created Supplier object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierDummy'
+      responses:
+        '200':
+          description: successful deleted Supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Supplier dose not exist.
+        '405':
+          description: Function not allowed
+    delete:
+      tags:
+        - supplier
+      summary: delete Supplier
+      description: This can only be done by the logged in admin.
+      operationId: deleteSupplier
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Supplier that need to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Supplier dose not exist.
+        '405':
+          description: Function not allowed
+
   
 components:
   schemas:
+    # SUPPLIER
+    Supplier:
+      type: object
+      properties:
+        public_id:
+          type: string
+          example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        title:
+          type: string
+          example: Super Supplier
+    SupplierDummy:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Super Product
+    # PRODUCT
+    Product:
+      type: object
+      properties:
+        public_id:
+          type: string
+          example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        title:
+          type: string
+          example: Super Product
+        price:
+          type: number
+          example: 1.3
+        stock:
+          type: integer
+          example: 30
+    ProductDummy:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Super Product
+        price:
+          type: number
+          example: 1.3
+        stock:
+          type: integer
+          example: 30
+    # USER
     User:
       type: object
       properties:
@@ -218,6 +491,14 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/User'
+    ProductArray:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Product'
   securitySchemes:
     petstore_auth:
       type: oauth2
