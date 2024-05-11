@@ -8,8 +8,8 @@ import uuid
 from flask_testing import TestCase
 
 
-public_id_persistant_user = str(uuid.uuid4())
-public_id_persistant_admin = str(uuid.uuid4())
+id_persistant_user = str(uuid.uuid4())
+id_persistant_admin = str(uuid.uuid4())
 
 class ProductTest(TestCase):
 
@@ -41,10 +41,10 @@ class ProductTest(TestCase):
         db.create_all()
         
         password = generate_password_hash("testpw", method="pbkdf2:sha256")
-        global public_id_persistant_user
-        global public_id_persistant_admin
-        user = User(name="testuser1", public_id=public_id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
-        user_admin = User(name="testadmin", public_id=public_id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
+        global id_persistant_user
+        global id_persistant_admin
+        user = User(name="testuser1", id=id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
+        user_admin = User(name="testadmin", id=id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
         
         db.session.add(user)
         db.session.add(user_admin)

@@ -8,8 +8,8 @@ import uuid
 from flask_testing import TestCase
 
 
-public_id_persistant_user = str(uuid.uuid4())
-public_id_persistant_admin = str(uuid.uuid4())
+public_id_persistent_user = str(uuid.uuid4())
+public_id_persistent_admin = str(uuid.uuid4())
 
 class ProductTest(TestCase):
 
@@ -29,9 +29,6 @@ class ProductTest(TestCase):
         response = self.client.post("/user/auth/login", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 302 # redirecting
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///test_db.sqlite'
-    TESTING = True
-
     def create_app(self):
         return create_app(type="test")
 
@@ -41,10 +38,10 @@ class ProductTest(TestCase):
         db.create_all()
         
         password = generate_password_hash("testpw", method="pbkdf2:sha256")
-        global public_id_persistant_user
-        global public_id_persistant_admin
-        user = User(name="testuser1", public_id=public_id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
-        user_admin = User(name="testadmin", public_id=public_id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
+        global public_id_persistent_user
+        global public_id_persistent_admin
+        user = User(name="testuser1", id=public_id_persistent_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
+        user_admin = User(name="testadmin", id=public_id_persistent_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
         
         db.session.add(user)
         db.session.add(user_admin)

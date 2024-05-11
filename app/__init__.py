@@ -47,6 +47,9 @@ def create_app(type="run"):
 
     from app.suppliers import suppliers_bp
     app.register_blueprint(suppliers_bp)
+    
+    from app.orders import orders_bp
+    app.register_blueprint(orders_bp)
 
     from app.commands import create_tables
     app.cli.add_command(create_tables)

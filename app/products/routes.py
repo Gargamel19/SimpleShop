@@ -50,7 +50,7 @@ def get_products():
     products = Products.query.all()
     prod_list = [] 
     for prod in products:
-        prod_list.append(prod.get_as_obj())
+        prod_list.append(prod.to_dict())
     return jsonify(prod_list)
 
 
@@ -74,14 +74,14 @@ def create_product():
     except IntegrityError:
         raise ProductAlreadyExist()
     
-    return prod.get_as_obj()
+    return prod.to_dict()
 
 @products_bp.route('/<public_id>', methods=['GET'])
 def get_product(public_id):
     product = Products.query.filter(Products.public_id == public_id).first()
     if not product:
         raise ProductNOTExist()
-    return jsonify(product.get_as_obj())
+    return jsonify(product.to_dict())
 
 
 @products_bp.route('/<public_id>', methods=['PUT'])
@@ -100,7 +100,7 @@ def edit_product(public_id):
     product.price = price
     product.stock = stock
     db.session.commit()
-    return jsonify(product.get_as_obj())
+    return jsonify(product.to_dict())
 
 @products_bp.route('/<public_id>', methods=['DELETE'])
 @login_required
@@ -111,4 +111,4 @@ def delete_product(public_id):
     if not product:
         raise ProductNOTExist()
     db.session.delete(product)
-    return jsonify(product.get_as_obj())
+    return jsonify(product.to_dict())

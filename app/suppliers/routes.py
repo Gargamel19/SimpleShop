@@ -46,7 +46,7 @@ def get_suppliers():
     suppliers = Suppliers.query.all()
     supp_list = [] 
     for supp in suppliers:
-        supp_list.append(supp.get_as_obj())
+        supp_list.append(supp.to_dict())
     return jsonify(supp_list)
 
 
@@ -68,14 +68,14 @@ def create_supplier():
     except IntegrityError:
         raise SupplierAlreadyExist()
     
-    return supp.get_as_obj()
+    return supp.to_dict()
 
 @suppliers_bp.route('/<public_id>', methods=['GET'])
 def get_supplier(public_id):
     supplier = Suppliers.query.filter(Suppliers.public_id == public_id).first()
     if not supplier:
         raise SupplierNOTExist()
-    return jsonify(supplier.get_as_obj())
+    return jsonify(supplier.to_dict())
 
 
 @suppliers_bp.route('/<public_id>', methods=['PUT'])
@@ -90,7 +90,7 @@ def edit_supplier(public_id):
     title = request.form["title"]
     supp.title = title
     db.session.commit()
-    return jsonify(supp.get_as_obj())
+    return jsonify(supp.to_dict())
 
 @suppliers_bp.route('/<public_id>', methods=['DELETE'])
 @login_required
@@ -101,4 +101,4 @@ def delete_supplier(public_id):
     if not supplier:
         raise SupplierNOTExist()
     db.session.delete(supplier)
-    return jsonify(supplier.get_as_obj())
+    return jsonify(supplier.to_dict())

@@ -90,28 +90,28 @@ def create_user():
     public_id = str(uuid.uuid4())
 
     try:
-        user = User(public_id=public_id, name=username, firstname=firstName, lastname=lastName, email=email, password=password, user_type=0)
+        user = User(id=public_id, name=username, firstname=firstName, lastname=lastName, email=email, password=password, user_type=0)
         db.session.add(user)
         db.session.commit()
     except IntegrityError:
         raise UserAlreadyExist()
 
-    return user.get_as_obj()
+    return user.to_dict()
 
 # GET
 @user_bp.route('/<user_id>', methods=['GET'])
 def get_user(user_id):
     
-    user = User.query.filter(User.public_id == user_id).first()
+    user = User.query.filter(User.id == user_id).first()
     if not user:
         raise UserNOTExist()
-    return user.get_as_obj()
+    return user.to_dict()
 
 # UPDATE
 @user_bp.route('/<user_id>', methods=['PUT'])
 @login_required
 def edit_user(user_id):
-    if not (user_id == current_user.public_id or current_user.user_type == 1):
+    if not (user_id == current_user.id or current_user.user_type == 1):
         raise NotAuthorized()
     username = request.form["username"]
     firstName = request.form["firstName"]
@@ -119,7 +119,7 @@ def edit_user(user_id):
     email = request.form["email"]
     pw = request.form["password"]
     password = generate_password_hash(pw, method="pbkdf2:sha256")
-    user = User.query.filter(User.public_id == user_id).first()
+    user = User.query.filter(User.id == user_id).first()
     if not user:
         raise UserNOTExist()
     user.name = username
@@ -129,20 +129,20 @@ def edit_user(user_id):
     user.password = password
     db.session.add(user)
     db.session.commit()
-    return user.get_as_obj()
+    return user.to_dict()
 
 # DELETE
 @user_bp.route('/<public_id>', methods=['DELETE'])
 @login_required
 def delete_user(public_id):
-    if not (public_id == current_user.public_id or current_user.user_type == 1):
+    if not (public_id == current_user.id or current_user.user_type == 1):
         raise NotAuthorized()
-    user = User.query.filter(User.public_id == public_id).first()
+    user = User.query.filter(User.id == public_id).first()
     if not user:
         raise UserNOTExist()
     db.session.delete(user)
     db.session.commit()
-    return user.get_as_obj()
+    return user.to_dict()
 
 # PROMOTE
 @user_bp.route('/<user_id>/promote', methods=['POST'])
@@ -150,9 +150,9 @@ def delete_user(public_id):
 def promote_user(user_id):
     if not (current_user.user_type == 1):
         raise NotAuthorized()
-    user = User.query.filter(User.public_id == user_id).first()
+    user = User.query.filter(User.id == user_id).first()
     if not user:
         raise UserNOTExist()
     user.user_type=1
     db.session.commit()
-    return user.get_as_obj()
+    return user.to_dict()

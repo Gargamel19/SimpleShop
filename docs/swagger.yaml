@@ -26,7 +26,7 @@ tags:
     description: Everything to manage the Products
   - name: supplier
     description: Everything to manage the Supplier
-  - name: order
+  - name: orders
     description: Everything to manage the Orders
 paths:
   /user:
@@ -383,9 +383,140 @@ paths:
         '405':
           description: Function not allowed
 
+  # ORDER
+  /orders:
+    get:
+      tags:
+        - orders
+      summary: Get All Orders
+      operationId: getOrders
+      responses:
+        '200':
+          description: successful receved Orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+    post:
+      tags:
+        - orders
+      summary: Create Order
+      description: This can only be done by the logged in admin.
+      operationId: createOrder
+      requestBody:
+        description: Created Order object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderDummy'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '400':
+          description: Order dose already exist.
+  /orders/{id}:
+    get:
+      tags:
+        - orders
+      summary: Get Order by ID
+      description: This can only be done by the logged in admin.
+      operationId: getOrder
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order that need to be updated
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
+    put:
+      tags:
+        - orders
+      summary: edit Order
+      description: This can only be done by the logged in admin.
+      operationId: editOrder
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order that need to be updated
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Created Order object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderDummy'
+      responses:
+        '200':
+          description: successful deleted Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
+    delete:
+      tags:
+        - orders
+      summary: delete Order
+      description: This can only be done by the logged in admin.
+      operationId: deleteOrder
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order that need to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
+
   
 components:
   schemas:
+    # ORDER
+    Order:
+      type: object
+      properties:
+        public_id:
+          type: string
+          example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        supplier:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+    OrderDummy:
+      type: object
+      properties:
+        supplier:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
     # SUPPLIER
     Supplier:
       type: object
