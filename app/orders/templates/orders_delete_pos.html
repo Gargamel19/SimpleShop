@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Delete Position for Order</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('orders.delete_pos', public_id=order.public_id, pos_id=pos.public_id) }}">
+            Are You sure about deleting '{{pos.amount}}*{{pos.product.title}}' for '{{order.public_id}}'?
+            
+            <button class="button is-block is-danger is-large is-fullwidth">Yes, Delete</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

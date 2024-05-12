@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('suppliers.static',filename='styles/suppliers.css') }}">
+
+<div class="columns is-8 is-multiline">
+    {% for supplier in suppliers %}
+        <div class="column is-one-quarter">
+            <div class="card product_container">
+                <div class="card-content">
+                    <div class="media-content">
+                        <p class="title is-4 has-text-dark">{{supplier.title}}</p>
+                    </div>
+                    <nav class="panel">
+                        <p class="panel-heading">Products</p>
+                        {% for s_p in supplier.s_p %}
+                            <div class="panel-block is-active">
+                                <a href="{{ url_for('suppliers.delete_product', public_id=supplier.public_id, s_p_id=s_p.public_id) }}" class="delete"></a> <div style="width:1rem"></div> <div class="name">{{s_p.product.title}}</div>
+                            </div>
+                            
+                        {% endfor %}
+                        <a href="{{ url_for('suppliers.products_add', public_id=supplier.public_id) }}" class="panel-block is-active">
+                            <span class="panel-icon">
+                            ➕
+                        </a>
+                    </nav>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ url_for('suppliers.edit', public_id=supplier.public_id) }}" class="card-footer-item">🖊️</a>
+                    <a href="{{ url_for('suppliers.delete', public_id=supplier.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+    {% endfor %}
+    <div class="column is-one-quarter">
+        <div class="card product_container">
+            <div class="card-content">
+                <div class="media-content">
+                    <p class="title is-4 has-text-dark">CREATE NEW SUPPLIER</p>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="{{ url_for('suppliers.create') }}" class="card-footer-item">➕</a>
+            </footer>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

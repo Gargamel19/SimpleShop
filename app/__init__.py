@@ -37,7 +37,7 @@ def create_app(type="run"):
     @login_manager.user_loader
     def load_user(user_id):
         # since the user_id is just the primary key of our user table, use it in the query for the user
-        return User.query.get(int(user_id))
+        return User.query.get(user_id)
 
     from app.user import user_bp
     app.register_blueprint(user_bp)
@@ -51,8 +51,9 @@ def create_app(type="run"):
     from app.orders import orders_bp
     app.register_blueprint(orders_bp)
 
-    from app.commands import create_tables
+    from app.commands import create_tables, add_testdata
     app.cli.add_command(create_tables)
+    app.cli.add_command(add_testdata)
 
     from app import models
 

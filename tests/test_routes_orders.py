@@ -53,8 +53,8 @@ class ProductTest(TestCase):
         user = User(name="testuser1", id=public_id_persistent_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
         user_admin = User(name="testadmin", id=public_id_persistent_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
 
-        product1 = Products(public_id=product1_persistent, title="Product 1", price=0.3, stock=10)
-        product2 = Products(public_id=product2_persistent, title="Product 2", price=0.4, stock=25)
+        product1 = Products(public_id=product1_persistent, title="Product 1", price=0.3, stock=100)
+        product2 = Products(public_id=product2_persistent, title="Product 2", price=0.4, stock=100)
 
         supplier1 = Suppliers(public_id=supplier1_persistent, title="Supplier 1")
         supplier2 = Suppliers(public_id=supplier2_persistent, title="Supplier 2")

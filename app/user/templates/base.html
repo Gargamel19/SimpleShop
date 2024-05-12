@@ -18,25 +18,36 @@
 
                     <div id="navbarMenuHeroA" class="navbar-menu">
                         <div class="navbar-end">
-                            {% if user %}
-                            <a class="navbar-item">
-                                {{ user.name}}
-                            </a>
-                            <a href="{{ url_for('user.index') }}" class="navbar-item">
-                                Home
-                            </a>
-                            
-                            <a href="{{ url_for('user.logout') }}" class="navbar-item">
-                                Logout                            
-                            </a>
+                            {% if user.name %}
+                                
+                                <a href="{{ url_for('orders.all') }}" class="navbar-item">
+                                    Orders                            
+                                </a>
+                                <a href="{{ url_for('suppliers.all') }}" class="navbar-item">
+                                    Suppliers                            
+                                </a>
+                                <a href="{{ url_for('products.all') }}" class="navbar-item">
+                                    Products                            
+                                </a>
+                                <a class="navbar-item">
+                                    {{ user.name}}
+                                </a>
+                                <a href="{{ url_for('user.index') }}" class="navbar-item">
+                                    Home
+                                </a>
+                                
+                                <a href="{{ url_for('user.logout') }}" class="navbar-item">
+                                    Logout                            
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('user.index') }}" class="navbar-item">
+                                    Home
+                                </a>
+                                
+                                <a href="{{ url_for('user.login') }}" class="navbar-item">
+                                    Login
+                                </a>
                             {% endif %}
-                            <a href="{{ url_for('user.index') }}" class="navbar-item">
-                                Home
-                            </a>
-                            
-                            <a href="{{ url_for('user.login') }}" class="navbar-item">
-                                Login
-                            </a>
                         </div>
                     </div>
                 </div>

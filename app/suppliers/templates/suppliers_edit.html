@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Edit Supplier</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('suppliers.edit', public_id=supplier.public_id) }}">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="title" placeholder="Title" autofocus="" value="{{supplier.title}}">
+                </div>
+            </div>
+
+            
+            <button class="button is-block is-info is-large is-fullwidth">Save</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

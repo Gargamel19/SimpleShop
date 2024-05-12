@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, request, flash, abort, jso
 from flask_login import login_user, current_user, login_required, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug import exceptions
-from app.models import User, Products, Orders, OrdersPOS
+from app.models import User, Products, Suppliers, Suppliers_Products, Orders, OrdersPOS
 from app.extentions import db, auth
 from sqlalchemy.exc import IntegrityError
 from flask import render_template_string
@@ -44,8 +44,117 @@ orders_bp.register_error_handler(NotAuthorized, handle_error)
 ### USER ENDPOINTS
 
 @orders_bp.route('/all', methods=['GET'])
-def index():
-    return render_template("base.html", user=current_user)
+def all():
+    orders = Orders.query.all()
+    orders_json = []
+    for order in orders:
+        ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
+        order_json = order.to_dict()
+        order_json["total_costs"] = 0
+        order_json["total_amount"] = 0
+        if order.supplier:
+            supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
+            order_json["supplier"] = supplier.to_dict()
+        ordersPOS_json = []
+        for pos in ordersPOS:
+            new_pos = pos.to_dict()
+            order_json["total_costs"] += pos.costs
+            order_json["total_amount"] += pos.amount
+            new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
+            ordersPOS_json.append(new_pos)
+
+        order_json["pos"] = ordersPOS_json
+        orders_json.append(order_json)
+
+
+    return render_template("orders.html", user=current_user, orders=orders_json)
+
+@orders_bp.route('/create_order_customer', methods=['GET', 'POST'])
+@login_required
+def create_cust():
+    if request.method == "GET":
+        return render_template("orders_customer_create.html", user=current_user)
+    else:
+        create_order()
+        return redirect(url_for('orders.all'))
+
+@orders_bp.route('/create_order_supply', methods=['GET', 'POST'])
+@login_required
+def create_supp():
+    if request.method == "GET":
+        supplier = Suppliers.query.all()
+        return render_template("orders_supply_create.html", user=current_user, supplier=supplier)
+    else:
+        create_order()
+        return redirect(url_for('orders.all'))
+
+
+@orders_bp.route('<public_id>/edit_order_supply', methods=['GET', 'POST'])
+@login_required
+def edit_supp(public_id):
+    if request.method == "GET":
+        supplier = Suppliers.query.all()
+        order = Orders.query.filter_by(public_id=public_id).first()
+        return render_template("orders_supply_edit.html", user=current_user, supplier=supplier, order=order)
+    else:
+        edit_order(public_id)
+        return redirect(url_for('orders.all'))
+    
+
+@orders_bp.route('<public_id>/edit_order_customer', methods=['GET', 'POST'])
+@login_required
+def edit_cust(public_id):
+    if request.method == "GET":
+        order = Orders.query.filter_by(public_id=public_id).first()
+        return render_template("orders_customer_edit.html", user=current_user, order=order)
+    else:
+        edit_order(public_id, type=0)
+        return redirect(url_for('orders.all'))
+
+
+@orders_bp.route('/<public_id>/delete', methods=['GET', 'POST'])
+@login_required
+def delete(public_id):
+    if request.method == "GET":
+        order = Orders.query.filter_by(public_id=public_id).first()
+        return render_template("orders_delete.html", user=current_user, order=order)
+    else:
+        delete_order(public_id)
+        return redirect(url_for('orders.all'))
+
+
+@orders_bp.route('/<public_id>/positions', methods=['GET'])
+def positions(public_id):
+    order = Orders.query.filter_by(public_id=public_id).first()
+    orderPOS = db.session.query(OrdersPOS.public_id, Products.title, OrdersPOS.amount, OrdersPOS.costs).join(Products, OrdersPOS.product_id==Products.public_id).filter(OrdersPOS.order_id==public_id).all()
+    return render_template("orders_details.html", user=current_user, order=order, orderPOS=orderPOS)
+
+@orders_bp.route('/<public_id>/positions/add', methods=['GET', 'POST'])
+def create_pos(public_id):
+    if request.method == "GET":
+        order = Orders.query.filter_by(public_id=public_id).first()
+        if order.type == 0:
+            products = db.session.query(Suppliers_Products.product_public_id, Products.title).join(Products, Suppliers_Products.product_public_id==Products.public_id).filter(Suppliers_Products.supplier_public_id==order.supplier).all()
+        else:
+            products = db.session.query(Products.public_id, Products.title).all()
+        return render_template("orders_create_pos.html", user=current_user, order=order, products=products)
+    else:
+        add_order_pos(public_id)
+        return redirect(url_for('orders.all'))
+
+@orders_bp.route('/<public_id>/positions/<pos_id>/delete', methods=['GET', 'POST'])
+def delete_pos(public_id, pos_id):
+    if request.method == 'GET':
+        order = Orders.query.filter_by(public_id=public_id).first()
+        orderPOS = OrdersPOS.query.filter(OrdersPOS.public_id == pos_id).first()
+        orderPOS_json = orderPOS.to_dict()
+        product = Products.query.filter(Products.public_id == orderPOS.product_id).first()
+        orderPOS_json["product"] = product.to_dict()
+        return render_template("orders_delete_pos.html", user=current_user, order=order, pos=orderPOS_json)
+    else:
+        delete_order_pos(public_id, pos_id)
+        return redirect(url_for('orders.all'))
+
 
 ### API ENDPOINTS
 
@@ -113,15 +222,19 @@ def get_order(public_id):
 
 @orders_bp.route('/<public_id>', methods=['PUT'])
 @login_required
-def edit_order(public_id):
+def edit_order(public_id, type=1):
     if current_user.user_type != 1:
         raise NotAuthorized()
     order = Orders.query.filter_by(public_id=public_id).first()
     if not order:
         raise OrderNOTExist()
     # TODO: if forms are not given
-    supplier = request.form["supplier"]
-    order.supplier = supplier
+    if "supplier" in request.form:
+        supplier = request.form["supplier"]
+        order.supplier = supplier
+    if "customer" in request.form:
+        customer = request.form["customer"]
+        order.customer = customer
     db.session.commit()
     return jsonify(order.to_dict())
 
@@ -134,6 +247,7 @@ def delete_order(public_id):
     if not order:
         raise OrderNOTExist()
     db.session.delete(order)
+    db.session.commit()
     return jsonify(order.to_dict())
 
 
@@ -154,6 +268,14 @@ def add_order_pos(public_id):
         raise ProductNOTExist()
     amount = request.form["amount"]
     pos = OrdersPOS(public_id=OrdersPOS_id, order_id=public_id, product_id=product_id, costs=float(amount)*product.price, amount=amount)
+
+    product = Products.query.filter(Products.public_id==pos.product_id).first()
+    #supply order
+    if order.type == 0:
+        product.stock = product.stock + int(pos.amount)
+    elif order.type == 1:
+        product.stock = product.stock - int(pos.amount)
+
     db.session.add(pos)
     db.session.commit()
     return jsonify(pos.to_dict())
@@ -189,6 +311,13 @@ def edit_order_pos(public_id, pos_id):
     pos.product_id = product_id
     pos.amount = amount
     pos.costs = float(amount)*product.price
+
+    #supply order
+    if order.type == 0:
+        product.stock = product.stock - int(pos.amount)+int(amount)
+    elif order.type == 1:
+        product.stock = product.stock + int(pos.amount)-int(amount)
+
     db.session.commit()
     return jsonify(pos.to_dict())
 
@@ -211,9 +340,18 @@ def delete_order_pos(public_id, pos_id):
     order = Orders.query.filter_by(public_id=public_id).first()
     if not order:
         raise OrderNOTExist()
-    pos = OrdersPOS.query.filter_by(public_id=pos_id).first()
-    if not order:
+    pos = OrdersPOS.query.filter(OrdersPOS.public_id==pos_id).first()
+    if not pos:
         raise OrderPosNOTExist()
+    
+    product = Products.query.filter(Products.public_id==pos.product_id).first()
+    #supply order
+    if order.type == 0:
+        product.stock = product.stock - int(pos.amount)
+    elif order.type == 1:
+        product.stock = product.stock + int(pos.amount)
+
+
     db.session.delete(pos)
     db.session.commit()
     return jsonify(pos.to_dict())

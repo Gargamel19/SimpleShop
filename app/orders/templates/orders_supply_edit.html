@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Edit Supply Order</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('orders.edit_supp', public_id=order.public_id) }}">
+            <select name="supplier" class="selectpicker form-control input is-large">
+                {% for supp in supplier %}
+                    {% if order.supplier == supp.public_id %}
+                        <option selected="selected" value="{{ supp.public_id }}">{{supp.title}}</option>
+                    {% else %}
+                        <option  value="{{ supp.public_id }}">{{supp.title}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <select name="order_type" class="selectpicker form-control input is-large">
+                <option value=0>Supply</option>
+                <option disabled value=1>Order</option>
+            </select>
+
+            
+            <button class="button is-block is-info is-large is-fullwidth">Edit</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

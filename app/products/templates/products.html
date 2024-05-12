@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('products.static',filename='styles/products.css') }}">
+
+<div class="columns is-8 is-multiline">
+    {% for product in products %}
+        <div class="column is-one-quarter">
+            {% if product.stock <= 10 %}
+                <div style="border-color:red;border-style: solid;border-width:thick" class="card product_container">
+            {% else %}
+                <div class="card product_container">
+            {% endif %}
+                <div class="card-content">
+                    <div class="media-content">
+                        <p class="title is-4 has-text-dark">{{product.title}}</p>
+                    </div>
+                    <div class="content">
+                        <div>💰: {{product.price}}€</div>
+                        {% if product.stock <= 10 %}
+                        <div style="color:red">🚛: {{product.stock}} stk</div>
+                        {% else %}
+                        <div style="color:green">🚛: {{product.stock}} stk</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ url_for('products.edit', public_id=product.public_id) }}" class="card-footer-item">🖊️</a>
+                    <a href="{{ url_for('products.delete', public_id=product.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+    {% endfor %}
+    <div class="column is-one-quarter">
+        <div class="card product_container">
+            <div class="card-content">
+                <div class="media-content">
+                    <p class="title is-4 has-text-dark">CREATE NEW PRODUCT</p>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="{{ url_for('products.create') }}" class="card-footer-item">➕</a>
+            </footer>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

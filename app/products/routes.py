@@ -5,13 +5,16 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug import exceptions
 from app.models import User, Products
 from app.extentions import db, auth
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, StatementError
 from flask import render_template_string
 import uuid
 import jwt
 from functools import wraps
 
 
+class WrongParameters(exceptions.HTTPException):
+    code = 405 
+    description = '"price" must be an float with "." ad decimal Sign'
 
 class NotAuthorized(exceptions.HTTPException):
     code = 405 
@@ -37,8 +40,36 @@ products_bp.register_error_handler(NotAuthorized, handle_error)
 ### USER ENDPOINTS
 
 @products_bp.route('/all', methods=['GET'])
-def index():
-    return render_template("base.html", user=current_user)
+def all():
+    products = Products.query.all()
+    return render_template("products.html", user=current_user, products=products)
+
+
+@products_bp.route('/<public_id>/edit', methods=['GET', 'POST'])
+def edit(public_id):
+    if request.method == 'GET':
+        product = Products.query.filter_by(public_id=public_id).first()
+        return render_template("products_edit.html", user=current_user, product=product)
+    else:
+        edit_product(public_id)
+        return redirect(url_for('products.all'))
+
+@products_bp.route('/<public_id>/delete', methods=['GET', 'POST'])
+def delete(public_id):
+    if request.method == 'GET':
+        product = Products.query.filter_by(public_id=public_id).first()
+        return render_template("products_delete.html", user=current_user, product=product)
+    else:
+        delete_product(public_id)
+        return redirect(url_for('products.all'))
+    
+@products_bp.route('/create', methods=['GET', 'POST'])
+def create():
+    if request.method == 'GET':
+        return render_template("products_create.html", user=current_user)
+    else:
+        create_product()
+        return redirect(url_for('products.all'))
 
 ### API ENDPOINTS
 
@@ -73,7 +104,8 @@ def create_product():
         db.session.commit()
     except IntegrityError:
         raise ProductAlreadyExist()
-    
+    except StatementError:
+        raise WrongParameters()
     return prod.to_dict()
 
 @products_bp.route('/<public_id>', methods=['GET'])
@@ -107,8 +139,9 @@ def edit_product(public_id):
 def delete_product(public_id):
     if current_user.user_type != 1:
         raise NotAuthorized()
-    product = Products.query.filter(Products.public_id == public_id).first()
+    product = Products.query.filter_by(public_id=public_id).first()
     if not product:
         raise ProductNOTExist()
     db.session.delete(product)
+    db.session.commit()
     return jsonify(product.to_dict())

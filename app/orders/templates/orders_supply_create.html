@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Create Supply Order</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('orders.create_supp') }}">
+            <select name="supplier" class="selectpicker form-control input is-large">
+                {% for supp in supplier %}
+                    <option value="{{ supp.public_id }}">{{supp.title}}</option>
+                {% endfor %}
+            </select>
+            <select name="order_type" class="selectpicker form-control input is-large">
+                <option value=0>Supply</option>
+                <option disabled value=1>Customer</option>
+            </select>
+
+            
+            <button class="button is-block is-info is-large is-fullwidth">Create</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

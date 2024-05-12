@@ -12,6 +12,7 @@ id_persistant_user = str(uuid.uuid4())
 id_persistant_admin = str(uuid.uuid4())
 
 product1_persistent = str(uuid.uuid4())
+supplier1_persistent = str(uuid.uuid4())
 
 class ProductTest(TestCase):
 
@@ -45,14 +46,20 @@ class ProductTest(TestCase):
         password = generate_password_hash("testpw", method="pbkdf2:sha256")
         global id_persistant_user
         global id_persistant_admin
+        global supplier1_persistent
         user = User(name="testuser1", id=id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
         user_admin = User(name="testadmin", id=id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
         
+        supplier1 =  Suppliers(public_id=supplier1_persistent, title="Super Supplier")
+
         product1 = Products(public_id=product1_persistent, title="Product 1", price=0.3, stock=10)
+
+
 
         db.session.add(user)
         db.session.add(user_admin)
         db.session.add(product1)
+        db.session.add(supplier1)
         db.session.commit()
     
     def test_add_supplier(self):
@@ -97,7 +104,7 @@ class ProductTest(TestCase):
         response = self.client.get(f"/suppliers/")
         
         got_supp = response.json
-        assert len(got_supp) == 1
+        assert len(got_supp) == 2
         assert got_supp[0]["title"] == "Super Supplier"
 
 
@@ -173,7 +180,7 @@ class ProductTest(TestCase):
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
 
-        response = self.client.put(f"/suppliers/{public_id}/add", data=data, headers={"Accept": "multipart/form-data"})
+        response = self.client.put(f"/suppliers/{public_id}/product/add", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
         s_p = Suppliers_Products.query.filter_by(supplier_public_id=public_id).first()
 
@@ -186,10 +193,43 @@ class ProductTest(TestCase):
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
         
-        response = self.client.put(f"/suppliers/{public_id}/add", data=data, headers={"Accept": "multipart/form-data"})
+        response = self.client.put(f"/suppliers/{public_id}/product/add", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 405
         
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
+
+
+    def test_delete_product_to_supplier(self):
+        global supplier1_persistent
+        global product1_persistent
+
+        s_p = Suppliers_Products(supplier_public_id=supplier1_persistent, product_public_id=product1_persistent)
+
+        db.session.add(s_p)
+        db.session.commit()
+        
+        # AS USER (FALUE)
+        self.user_login()
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
+
+        response = self.client.delete(f"/suppliers/{supplier1_persistent}/product/{s_p.public_id}")
+        assert response.status_code == 405
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
+
+        # AS ADMIN (SUCC)
+        self.admin_login()
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
+
+        response = self.client.delete(f"/suppliers/{supplier1_persistent}/product/{s_p.public_id}")
+        assert response.status_code == 200
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 0
+
+        db.session.delete(s_p)
+
 
 if __name__ == '__main__':
     unittest.main()
