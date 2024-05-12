@@ -23,4 +23,7 @@ jobs:
         run: python -m pytest .
       - name: Comment coverage
         working-directory: .
-        run: python -m pytest . --cov=app
+        run: coverage run -m pytest
+      - name: Comment print
+        working-directory: .
+        run: coverage report -m
