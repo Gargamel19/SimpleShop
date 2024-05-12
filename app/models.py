@@ -20,7 +20,7 @@ class Products(db.Model, SerializerMixin):
     __tablename__ = "product"
     public_id = Column(String(50), unique=True, primary_key=True) # primary keys are required by SQLAlchemy
     title = Column(String(1000), unique=True)
-    price = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
 
     
@@ -40,12 +40,15 @@ class Suppliers_Products(db.Model, SerializerMixin):
 class Orders(db.Model, SerializerMixin):
     __tablename__ = "orders_supply"
     public_id = Column(String(50), unique=True, primary_key=True) # primary keys are required by SQLAlchemy
-    supplier = Column(Integer, nullable=False)
+    supplier = Column(String(50), nullable=True)
+    type = Column(Integer, nullable=False) #(0 Supply, 1 Order)
+    customer = Column(String(10000), nullable=True)
     
     
 class OrdersPOS(db.Model, SerializerMixin):
     __tablename__ = "order_pos"
     public_id = Column(String(50), unique=True, primary_key=True) # primary keys are required by SQLAlchemy
-    product = Column(Integer, nullable=False)
+    order_id = Column(String(50))
+    product_id = Column(String(50), nullable=False)
     costs = Column(Float, nullable=False)
     amount = Column(Integer, nullable=False)

@@ -382,6 +382,41 @@ paths:
           description: Supplier dose not exist.
         '405':
           description: Function not allowed
+  /supplier/{id}/add:
+    put:
+      tags:
+        - supplier
+      summary: add Product to Supplier
+      description: This can only be done by the logged in admin.
+      operationId: addProductToSupplier
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Supplier that need to be updated
+          required: true
+          schema:
+            type: string
+            example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+      requestBody:
+        description: Created Supplier object
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                product_id:
+                  type: string
+                  example: "522369cd-2185-442e-a88e-9dwetq9c2386"
+      responses:
+        '200':
+          description: successful deleted Supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierProduct'
+        '404':
+          description: Supplier dose not exist.
+        '405':
+          description: Function not allowed
 
   # ORDER
   /orders:
@@ -415,7 +450,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                $ref: '#/components/schemas/Order'
         '400':
           description: Order dose already exist.
   /orders/{id}:
@@ -497,7 +532,138 @@ paths:
           description: Order dose not exist.
         '405':
           description: Function not allowed
-
+  # ORDERPOS
+  /orders/{id}/pos:
+    get:
+      tags:
+        - orders
+      summary: Get All OrderPOS of Order
+      operationId: getOrderPoss
+      responses:
+        '200':
+          description: successful receved Orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPOS'
+    post:
+      tags:
+        - orders
+      summary: Create OrderPos
+      description: This can only be done by the logged in admin.
+      operationId: createOrderPos
+      requestBody:
+        description: Created OrderPos object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderPOSDummy'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPOS'
+        '400':
+          description: Order dose already exist.
+  /orders/{id}/pos/{pos_id}:
+    get:
+      tags:
+        - orders
+      summary: Get OrderPOS by ID
+      description: This can only be done by the logged in admin.
+      operationId: getOrderPOS
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order
+          required: true
+          schema:
+            type: string
+        - name: pos_id
+          in: path
+          description: public_id of OrderPOS 
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPOS'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
+    put:
+      tags:
+        - orders
+      summary: edit OrderPOS
+      description: This can only be done by the logged in admin.
+      operationId: editOrderPOS
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order that need to be updated
+          required: true
+          schema:
+            type: string
+        - name: pos_id
+          in: path
+          description: public_id of OrderPOS 
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Created OrderPOS object
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderPOSDummy'
+      responses:
+        '200':
+          description: successful deleted Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPOS'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
+    delete:
+      tags:
+        - orders
+      summary: delete Order
+      description: This can only be done by the logged in admin.
+      operationId: deleteOrder
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Order that need to be deleted
+          required: true
+          schema:
+            type: string
+        - name: pos_id
+          in: path
+          description: public_id of OrderPOS 
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful deleted OrderPOS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPOS'
+        '404':
+          description: Order dose not exist.
+        '405':
+          description: Function not allowed
   
 components:
   schemas:
@@ -517,6 +683,41 @@ components:
         supplier:
           type: string
           example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+        order_type:
+          type: integer
+          description: 0=supply 1=order
+          example: 0
+    # ORDERPOS
+    OrderPOS:
+      type: object
+      properties:
+        public_id:
+          type: string
+          example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        order_id:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+        product_id:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+        costs:
+          type: number
+          example: 12.4
+        amount:
+          type: integer
+          example: 12
+    OrderPOSDummy:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+        product_id:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
+        amount:
+          type: integer
+          example: 12
     # SUPPLIER
     Supplier:
       type: object
@@ -533,6 +734,15 @@ components:
         title:
           type: string
           example: Super Product
+    SupplierProduct:
+      type: object
+      properties:
+        supplier_id:
+          type: string
+          example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        product_id:
+          type: string
+          example: '522369cd-2185-442e-a88e-9dwetq9c2386'
     # PRODUCT
     Product:
       type: object
@@ -604,15 +814,6 @@ components:
         password:
           type: string
           example: '12345'
-    UserLoginDummy:
-      type: object
-      properties:
-        username:
-          type: string
-          example: fdhgsdfgjsdfg
-        password:
-          type: string
-          example: "12345"
   requestBodies:
     UserArray:
       description: List of user object
@@ -630,16 +831,3 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Product'
-  securitySchemes:
-    petstore_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
-          scopes:
-            write:pets: modify pets in your account
-            read:pets: read your pets
-    api_key:
-      type: apiKey
-      name: api_key
-      in: header

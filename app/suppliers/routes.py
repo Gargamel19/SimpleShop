@@ -2,7 +2,7 @@ from app.suppliers import suppliers_bp
 from flask import render_template, request, jsonify
 from flask_login import current_user, login_required
 from werkzeug import exceptions
-from app.models import User, Products, Suppliers
+from app.models import User, Products, Suppliers, Suppliers_Products
 from app.extentions import db
 from sqlalchemy.exc import IntegrityError
 import uuid
@@ -12,6 +12,10 @@ import uuid
 class NotAuthorized(exceptions.HTTPException):
     code = 405 
     description = 'User is not authorized to perform this action'
+
+class ProductNOTExist(exceptions.HTTPException):
+    code = 404
+    description = 'Product dose not exist.'
 
 class SupplierNOTExist(exceptions.HTTPException):
     code = 404
@@ -102,3 +106,20 @@ def delete_supplier(public_id):
         raise SupplierNOTExist()
     db.session.delete(supplier)
     return jsonify(supplier.to_dict())
+
+
+@suppliers_bp.route('/<public_id>/add', methods=['PUT'])
+@login_required
+def add_product_to_supplier(public_id):
+    if current_user.user_type != 1:
+        raise NotAuthorized()
+    supplier = Suppliers.query.filter(Suppliers.public_id == public_id).first()
+    if not supplier:
+        raise SupplierNOTExist()
+    product_id = request.form["product_id"]
+    product = Products.query.filter(Products.public_id == product_id).first()
+    if not product:
+        raise ProductNOTExist()
+    s_p = Suppliers_Products(supplier_public_id=supplier.public_id, product_public_id=product.public_id)
+    db.session.add(s_p)
+    return jsonify(s_p.to_dict())

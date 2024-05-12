@@ -1,6 +1,6 @@
 from app import create_app
 from app.extentions import db
-from app.models import User, Products, Suppliers
+from app.models import User, Products, Suppliers, Suppliers_Products
 import unittest
 from werkzeug.security import generate_password_hash
 import uuid
@@ -10,6 +10,8 @@ from flask_testing import TestCase
 
 id_persistant_user = str(uuid.uuid4())
 id_persistant_admin = str(uuid.uuid4())
+
+product1_persistent = str(uuid.uuid4())
 
 class ProductTest(TestCase):
 
@@ -46,8 +48,11 @@ class ProductTest(TestCase):
         user = User(name="testuser1", id=id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
         user_admin = User(name="testadmin", id=id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
         
+        product1 = Products(public_id=product1_persistent, title="Product 1", price=0.3, stock=10)
+
         db.session.add(user)
         db.session.add(user_admin)
+        db.session.add(product1)
         db.session.commit()
     
     def test_add_supplier(self):
@@ -152,6 +157,39 @@ class ProductTest(TestCase):
         
         assert Suppliers.query.filter_by(public_id=public_id).count() == 0
 
+    def test_add_product_to_supplier(self):
+        global product1_persistent
+        public_id = str(uuid.uuid4())
+        supp = Suppliers(public_id=public_id, title="Super Supplier")
+        db.session.add(supp)
+        db.session.commit()
+
+        data = {
+            "product_id": product1_persistent
+        }
+
+        # AS ADMIN (SUCC)
+        self.admin_login()
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
+
+        response = self.client.put(f"/suppliers/{public_id}/add", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 200
+        s_p = Suppliers_Products.query.filter_by(supplier_public_id=public_id).first()
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 1
+
+        db.session.delete(s_p)
+
+        # AS USER (FALUE)
+        self.user_login()
+
+        assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
+        
+        response = self.client.put(f"/suppliers/{public_id}/add", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 405
+        
+        assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
 
 if __name__ == '__main__':
     unittest.main()
