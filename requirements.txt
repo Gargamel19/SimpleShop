@@ -16,3 +16,4 @@ PyJWT==2.4.0
 pytest==7.4.4
 pytest_mock
 Flask-Testing
+pytest-cov
