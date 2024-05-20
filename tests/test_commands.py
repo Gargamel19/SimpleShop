@@ -25,6 +25,12 @@ class OrderTest(TestCase):
         db.drop_all()
 
 
+    def setUp(self):
+        db.session.remove()
+        db.drop_all()
+        db.create_all()
+
+
     def test_hello_command(self):
         result = self.runner.invoke(self.temp_app.cli.commands['create_tables'])
         assert result.exit_code == 0
@@ -33,9 +39,9 @@ class OrderTest(TestCase):
 
     def test_add_admin_h(self):
         result = self.runner.invoke(self.temp_app.cli.commands['add_testdata'])
-        #assert result.exit_code == 0
-        #assert User.query.filter(User.name == "fettarmqp").count() == 1
-        #assert User.query.filter(User.name == "testuser").count() == 1
+        assert result.exit_code == 0
+        assert User.query.filter(User.name == "fettarmqp").count() == 1
+        assert User.query.filter(User.name == "testuser").count() == 1
 
 
 if __name__ == '__main__':
