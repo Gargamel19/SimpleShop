@@ -48,12 +48,9 @@ orders_bp.register_error_handler(NotAuthorized, handle_error)
 @login_required
 def dashboard():
 
-
     products_aos = Products.query.order_by(Products.stock).filter(Products.stock<0).all()
     products_close_aos = Products.query.order_by(Products.stock).filter(Products.stock<10, Products.stock>0).all()
     products = Products.query.order_by(Products.stock).filter(Products.stock>10).all()
-
-
 
     orders = Orders.query.order_by(Orders.order_date.desc()).limit(5).all()
     orders_by_date = {}
@@ -215,15 +212,10 @@ def delete(public_id):
     else:
         delete_order(public_id)
         return redirect(url_for('orders.all'))
-
-
-@orders_bp.route('/<public_id>/positions', methods=['GET'])
-def positions(public_id):
-    order = Orders.query.filter_by(public_id=public_id).first()
-    orderPOS = db.session.query(OrdersPOS.public_id, Products.title, OrdersPOS.amount, OrdersPOS.costs).join(Products, OrdersPOS.product_id==Products.public_id).filter(OrdersPOS.order_id==public_id).all()
-    return render_template("orders_details.html", user=current_user, order=order, orderPOS=orderPOS)
+    
 
 @orders_bp.route('/<public_id>/positions/add', methods=['GET', 'POST'])
+@login_required
 def create_pos(public_id):
     if request.method == "GET":
         order = Orders.query.filter_by(public_id=public_id).first()
@@ -237,6 +229,7 @@ def create_pos(public_id):
         return redirect(url_for('orders.all'))
 
 @orders_bp.route('/<public_id>/positions/<pos_id>/delete', methods=['GET', 'POST'])
+@login_required
 def delete_pos(public_id, pos_id):
     if request.method == 'GET':
         order = Orders.query.filter_by(public_id=public_id).first()

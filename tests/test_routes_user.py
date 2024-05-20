@@ -9,6 +9,7 @@ from flask_testing import TestCase
 
 
 public_id_persistant_user = str(uuid.uuid4())
+public_id_persistant_user2 = str(uuid.uuid4())
 public_id_persistant_admin = str(uuid.uuid4())
 
 class UserTest(TestCase):
@@ -49,10 +50,13 @@ class UserTest(TestCase):
         
         password = generate_password_hash("testpw", method="pbkdf2:sha256")
         global public_id_persistant_user
+        global public_id_persistant_user2
         global public_id_persistant_admin
         user = User(name="testuser1", id=public_id_persistant_user, firstname="test1", lastname="user", email="testuser@testmail.com", password=password, user_type=0)
+        user2 = User(name="testuser2", id=public_id_persistant_user2, firstname="test2", lastname="user", email="testuser2@testmail.com", password=password, user_type=0)
         user_admin = User(name="testadmin", id=public_id_persistant_admin, firstname="test", lastname="admin", email="testadmin@testmail.com", password=password, user_type=1)
         db.session.add(user)
+        db.session.add(user2)
         db.session.add(user_admin)
         db.session.commit()
 
@@ -103,7 +107,7 @@ class UserTest(TestCase):
 
         # EDIT OTHER USER
         data = {
-            "username": "testuser2",
+            "username": "testuser3",
             "firstName": "test",
             "lastName": "user",
             "email": "testuser@testmail2.com",
@@ -115,7 +119,7 @@ class UserTest(TestCase):
         response = self.client.put(f"/user/{user['id']}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
         edit_user = User.query.filter_by(id=user["id"]).first()
-        assert edit_user.name == "testuser2"
+        assert edit_user.name == "testuser3"
         assert edit_user.email == "testuser@testmail2.com"
 
         # DELETE OTHER
@@ -149,7 +153,7 @@ class UserTest(TestCase):
         
         # EDIT USER ERROR
         data = {
-            "username": "testuser2",
+            "username": "testuser3",
             "firstName": "test",
             "lastName": "user",
             "email": "testuser@testmail2.com",
@@ -166,7 +170,7 @@ class UserTest(TestCase):
 
         # EDIT USER
         data = {
-            "username": "testuser2",
+            "username": "testuser3",
             "firstName": "test",
             "lastName": "user",
             "email": "testuser@testmail2.com",
@@ -180,7 +184,7 @@ class UserTest(TestCase):
         response = self.client.put(f"/user/{user['id']}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
         edit_user = User.query.filter_by(id=user["id"]).first()
-        assert edit_user.name == "testuser2"
+        assert edit_user.name == "testuser3"
         assert edit_user.email == "testuser@testmail2.com"
 
 
@@ -198,6 +202,8 @@ class UserTest(TestCase):
         response = self.client.delete(f"/user/{public_id_persistant_user}")
         assert response.status_code == 302
         self.user_login()
+        response = self.client.delete(f"/user/{public_id_persistant_user2}")
+        assert response.status_code == 405
         response = self.client.delete(f"/user/1")
         assert response.status_code == 404
         assert User.query.filter_by(id=public_id_persistant_user).count() == 1

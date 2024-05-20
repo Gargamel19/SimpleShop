@@ -12,6 +12,7 @@ def create_tables():
     from app import create_app
     create_app()
     db.create_all()
+    print("tables created")
 
 def add_admin_h(username, firstname, lastname, email, pw, user_type=1):
     print("add_admin")
@@ -34,3 +35,6 @@ def add_user_h(username, firstname, lastname, email, pw, user_type=0):
 def add_testdata():
     add_admin_h("fettarmqp", "ferdinand", "trendelenburg", "trendelenburger19.04@gmail.com", "1234", user_type=1)
     add_user_h("testuser", "testuser", "testuser", "testuser@gmail.com", "1234", user_type=0)
+
+
+

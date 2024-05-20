@@ -105,13 +105,13 @@ class OrderTest(TestCase):
         assert response.status_code == 405
 
     def test_add_order_wrong_parameters(self):
-        global supplier1_persistent
+
         data = {
             "supplier": supplier1_persistent,
             "order_type": 1
         }
         
-        # AS USER (FALUE)
+        # AS admin (FALUE)
         self.admin_login()
 
         response = self.client.post("/orders/", data=data, headers={"Accept": "multipart/form-data"})
@@ -123,7 +123,7 @@ class OrderTest(TestCase):
             "order_type": 0
         }
         
-        # AS USER (FALUE)
+        # AS admin (FALUE)
         self.admin_login()
 
         response = self.client.post("/orders/", data=data, headers={"Accept": "multipart/form-data"})
@@ -136,7 +136,7 @@ class OrderTest(TestCase):
             "order_type": 1
         }
         
-        # AS USER (FALUE)
+        # AS admin (FALUE)
         self.admin_login()
 
         response = self.client.post("/orders/", data=data, headers={"Accept": "multipart/form-data"})
@@ -456,6 +456,13 @@ class OrderTest(TestCase):
 
         response = self.client.get(f"/orders/{public_id}/pos/{public_id_POS}")
         assert response.status_code == 200
+
+        # AS ADMIN (FALUE)
+        self.admin_login()
+
+        response = self.client.get(f"/orders/1/pos/{public_id_POS}")
+        assert response.status_code == 404
+
         
         assert OrdersPOS.query.filter_by(public_id=public_id_POS).count() == 1
 
@@ -489,8 +496,16 @@ class OrderTest(TestCase):
 
         response = self.client.get(f"/orders/{public_id}/pos/")
         assert response.status_code == 200
+
+        # AS ADMIN (FALUE)
+        self.admin_login()
+
+        response = self.client.get(f"/orders/1/pos/")
+        assert response.status_code == 404
         
         assert OrdersPOS.query.filter_by(order_id=public_id).count() == 2
+    
+    
 
 if __name__ == '__main__':
     unittest.main()

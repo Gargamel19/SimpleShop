@@ -95,7 +95,7 @@ class SuppliersTest(TestCase):
         assert got_supplier["title"] == "Super Supplier"
 
 
-    def test_get_supplier(self):
+    def test_get_suppliers(self):
         public_id = str(uuid.uuid4())
         supp = Suppliers(public_id=public_id, title="Super Supplier")
         db.session.add(supp)
@@ -106,6 +106,17 @@ class SuppliersTest(TestCase):
         got_supp = response.json
         assert len(got_supp) == 2
         assert got_supp[0]["title"] == "Super Supplier"
+    
+    def test_get_supplier(self):
+        global supplier1_persistent
+
+        response = self.client.get(f"/suppliers/{supplier1_persistent}")
+        
+        got_supp = response.json
+        assert type(got_supp) == dict
+
+        response = self.client.get(f"/suppliers/1")
+        assert response.status_code == 404
 
 
     def test_edit_supplier(self):
