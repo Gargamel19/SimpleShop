@@ -51,19 +51,6 @@
             </div>
         </div>
     {% endfor %}
-    <div class="column is-full">
-        <div class="card product_container">
-            <div class="card-content">
-                <div class="media-content">
-                    <p class="title is-4 has-text-dark">CREATE NEW ORDER</p>
-                </div>
-            </div>
-            <footer class="card-footer">
-                <a href="{{ url_for('orders.create_supp') }}" class="card-footer-item">➕ Supply Order</a>
-                <a href="{{ url_for('orders.create_cust') }}" class="card-footer-item">➕ Customer Order</a>
-            </footer>
-        </div>
-    </div>
 </div>
 
 {% endblock %}

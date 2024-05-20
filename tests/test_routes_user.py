@@ -14,6 +14,28 @@ public_id_persistant_admin = str(uuid.uuid4())
 class UserTest(TestCase):
 
 
+    def admin_login(self):
+        data = {
+            "username": "testadmin",
+            "password": "testpw"
+        }
+        response = self.client.post("/user/auth/login", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 302 # redirecting
+
+    def user_login(self):
+        data = {
+            "username": "testuser1",
+            "password": "testpw"
+        }
+        response = self.client.post("/user/auth/login", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 302 # redirecting
+
+    def user_logout(self):
+        
+        response = self.client.get("/user/logout")
+        assert response.status_code == 302 # redirecting
+
+
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test_db.sqlite'
     TESTING = True
 
@@ -153,23 +175,44 @@ class UserTest(TestCase):
         edit_user = User.query.filter_by(id=user["id"]).first()
         assert edit_user.name == "testuser"
         assert edit_user.email == "testuser@testmail.com"
+        response = self.client.put(f"/user/1", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 404
         response = self.client.put(f"/user/{user['id']}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
         edit_user = User.query.filter_by(id=user["id"]).first()
         assert edit_user.name == "testuser2"
         assert edit_user.email == "testuser@testmail2.com"
 
+
+        # PROMOTE ERROR
+        self.user_logout()
+        response = self.client.post(f"/user/{public_id_persistant_user}/promote")
+        assert response.status_code == 302
+        self.user_login()
+        response = self.client.post(f"/user/1/promote")
+        assert response.status_code == 404
         
         # DELETE ERROR
+        self.user_logout()
         assert User.query.filter_by(id=public_id_persistant_user).count() == 1
         response = self.client.delete(f"/user/{public_id_persistant_user}")
-        assert response.status_code == 405
+        assert response.status_code == 302
+        self.user_login()
+        response = self.client.delete(f"/user/1")
+        assert response.status_code == 404
         assert User.query.filter_by(id=public_id_persistant_user).count() == 1
 
         # DELETE
-        response = self.client.delete(f"/user/{user['id']}")
+        self.admin_login()
+        user_id = user["id"]
+        response = self.client.delete(f"/user/{user_id}")
         assert response.status_code == 200
-        assert User.query.filter_by(id=user["id"]).count() == 0
+        assert User.query.filter_by(id=user_id).count() == 0
+        
+        # PROMOTE
+        self.admin_login()
+        response = self.client.post(f"/user/{public_id_persistant_user}/promote")
+        assert response.status_code == 200
 
 if __name__ == '__main__':
     unittest.main()

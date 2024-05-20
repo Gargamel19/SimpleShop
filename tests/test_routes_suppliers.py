@@ -14,7 +14,7 @@ id_persistant_admin = str(uuid.uuid4())
 product1_persistent = str(uuid.uuid4())
 supplier1_persistent = str(uuid.uuid4())
 
-class ProductTest(TestCase):
+class SuppliersTest(TestCase):
 
     def admin_login(self):
         data = {

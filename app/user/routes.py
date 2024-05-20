@@ -46,6 +46,7 @@ def login():
 
 # logout user
 @user_bp.route('/logout')
+@login_required
 def logout():
     auth_logout()
     return redirect(url_for('user.login'))
@@ -100,6 +101,7 @@ def create_user():
 
 # GET
 @user_bp.route('/<user_id>', methods=['GET'])
+@login_required
 def get_user(user_id):
     
     user = User.query.filter(User.id == user_id).first()
@@ -111,6 +113,9 @@ def get_user(user_id):
 @user_bp.route('/<user_id>', methods=['PUT'])
 @login_required
 def edit_user(user_id):
+    user = User.query.filter(User.id == user_id).first()
+    if not user:
+        raise UserNOTExist()
     if not (user_id == current_user.id or current_user.user_type == 1):
         raise NotAuthorized()
     username = request.form["username"]
@@ -119,9 +124,6 @@ def edit_user(user_id):
     email = request.form["email"]
     pw = request.form["password"]
     password = generate_password_hash(pw, method="pbkdf2:sha256")
-    user = User.query.filter(User.id == user_id).first()
-    if not user:
-        raise UserNOTExist()
     user.name = username
     user.firstName = firstName
     user.lastName = lastName
@@ -135,24 +137,24 @@ def edit_user(user_id):
 @user_bp.route('/<public_id>', methods=['DELETE'])
 @login_required
 def delete_user(public_id):
-    if not (public_id == current_user.id or current_user.user_type == 1):
-        raise NotAuthorized()
     user = User.query.filter(User.id == public_id).first()
     if not user:
         raise UserNOTExist()
+    if not (public_id == current_user.id or current_user.user_type == 1):
+        raise NotAuthorized()
     db.session.delete(user)
     db.session.commit()
     return user.to_dict()
 
 # PROMOTE
-@user_bp.route('/<user_id>/promote', methods=['POST'])
+@user_bp.route('/<public_id>/promote', methods=['POST'])
 @login_required
-def promote_user(user_id):
-    if not (current_user.user_type == 1):
-        raise NotAuthorized()
-    user = User.query.filter(User.id == user_id).first()
+def promote_user(public_id):
+    user = User.query.filter(User.id == public_id).first()
     if not user:
         raise UserNOTExist()
+    if not (current_user.user_type == 1):
+        raise NotAuthorized()
     user.user_type=1
     db.session.commit()
     return user.to_dict()

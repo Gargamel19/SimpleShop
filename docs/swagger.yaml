@@ -382,7 +382,7 @@ paths:
           description: Supplier dose not exist.
         '405':
           description: Function not allowed
-  /supplier/{id}/add:
+  /supplier/{id}/product/add:
     put:
       tags:
         - supplier
@@ -393,6 +393,48 @@ paths:
         - name: id
           in: path
           description: public_id of Supplier that need to be updated
+          required: true
+          schema:
+            type: string
+            example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+      requestBody:
+        description: Created Supplier object
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                product_id:
+                  type: string
+                  example: "522369cd-2185-442e-a88e-9dwetq9c2386"
+      responses:
+        '200':
+          description: successful deleted Supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierProduct'
+        '404':
+          description: Supplier dose not exist.
+        '405':
+          description: Function not allowed
+  /supplier/{id}/product/{s_p_id}:
+    put:
+      tags:
+        - supplier
+      summary: delete Product to Supplier
+      description: This can only be done by the logged in admin.
+      operationId: addProductToSupplier
+      parameters:
+        - name: id
+          in: path
+          description: public_id of Supplier that need to be updated
+          required: true
+          schema:
+            type: string
+            example: '525079cd-2185-4e2e-a88e-9d2b5e9c2b81'
+        - name: s_p_id
+          in: path
+          description: public_id of Supplier-Product that need to be deleted
           required: true
           schema:
             type: string

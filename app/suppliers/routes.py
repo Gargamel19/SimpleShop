@@ -37,6 +37,7 @@ suppliers_bp.register_error_handler(NotAuthorized, handle_error)
 ### USER ENDPOINTS
 
 @suppliers_bp.route('/all', methods=['GET'])
+@login_required
 def all():
     suppliers = Suppliers.query.all()
     suppliers_json = []
@@ -55,6 +56,7 @@ def all():
 
 
 @suppliers_bp.route('/<public_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit(public_id):
     if request.method == 'GET':
         supplier = Suppliers.query.filter_by(public_id=public_id).first()
@@ -64,6 +66,7 @@ def edit(public_id):
         return redirect(url_for('suppliers.all'))
 
 @suppliers_bp.route('/<public_id>/delete', methods=['GET', 'POST'])
+@login_required
 def delete(public_id):
     if request.method == 'GET':
         supplier = Suppliers.query.filter_by(public_id=public_id).first()
@@ -73,6 +76,7 @@ def delete(public_id):
         return redirect(url_for('suppliers.all'))
     
 @suppliers_bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create():
     if request.method == 'GET':
         return render_template("suppliers_create.html", user=current_user)
@@ -81,6 +85,7 @@ def create():
         return redirect(url_for('suppliers.all'))
     
 @suppliers_bp.route('/<public_id>/products/add', methods=['GET', 'POST'])
+@login_required
 def products_add(public_id):
     if request.method == 'GET':
         supplier = Suppliers.query.filter_by(public_id=public_id).first()
@@ -91,6 +96,7 @@ def products_add(public_id):
         return redirect(url_for('suppliers.all', public_id=public_id))
     
 @suppliers_bp.route('/<public_id>/products/<s_p_id>/delete', methods=['GET', 'POST'])
+@login_required
 def delete_product(public_id, s_p_id):
     if request.method == 'GET':
         supplier = Suppliers.query.filter_by(public_id=public_id).first()

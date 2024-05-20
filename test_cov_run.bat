@@ -1,0 +1,1 @@
+python -m pytest . --cov=app --cov-report=html:coverage/html

@@ -41,11 +41,20 @@ products_bp.register_error_handler(NotAuthorized, handle_error)
 
 @products_bp.route('/all', methods=['GET'])
 def all():
-    products = Products.query.all()
+    products_query = Products.query
+    
+    if "sort" in request.args:
+        sort_value = request.args["sort"]
+        if sort_value=="price":
+            products_query=products_query.order_by(Products.price.desc())
+        elif sort_value=="stock":
+            products_query=products_query.order_by(Products.stock.desc())
+    products = products_query.all()
     return render_template("products.html", user=current_user, products=products)
 
 
 @products_bp.route('/<public_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit(public_id):
     if request.method == 'GET':
         product = Products.query.filter_by(public_id=public_id).first()
@@ -55,6 +64,7 @@ def edit(public_id):
         return redirect(url_for('products.all'))
 
 @products_bp.route('/<public_id>/delete', methods=['GET', 'POST'])
+@login_required
 def delete(public_id):
     if request.method == 'GET':
         product = Products.query.filter_by(public_id=public_id).first()
@@ -64,6 +74,7 @@ def delete(public_id):
         return redirect(url_for('products.all'))
     
 @products_bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create():
     if request.method == 'GET':
         return render_template("products_create.html", user=current_user)

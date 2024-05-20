@@ -40,6 +40,7 @@ class Suppliers_Products(db.Model, SerializerMixin):
 class Orders(db.Model, SerializerMixin):
     __tablename__ = "orders_supply"
     public_id = Column(String(50), unique=True, primary_key=True) # primary keys are required by SQLAlchemy
+    order_date = Column(DateTime, nullable=False)
     supplier = Column(String(50), nullable=True)
     type = Column(Integer, nullable=False) #(0 Supply, 1 Order)
     customer = Column(String(10000), nullable=True)

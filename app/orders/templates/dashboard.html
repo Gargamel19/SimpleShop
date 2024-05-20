@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('orders.static',filename='styles/orders.css') }}">
+
+<a href="{{ url_for('products.all') }}" class="title is-3">Products:</a>
+<div class="columns is-8 is-multiline">
+    {% for product in products_aos %}
+        <div class="column is-one-quarter">
+            <div style="border-color:red;border-style: solid;border-width:thick" class="card product_container">
+                <div class="card-content">
+                    <div class="media-content">
+                        <p class="title is-4 has-text-dark">{{product.title}}</p>
+                    </div>
+                    <div class="content">
+                        <div>💰: {{product.price}}€</div>
+                        {% if product.stock <= 10 %}
+                        <div style="color:red">🚛: {{product.stock}} stk</div>
+                        {% else %}
+                        <div style="color:green">🚛: {{product.stock}} stk</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ url_for('products.edit', public_id=product.public_id) }}" class="card-footer-item">🖊️</a>
+                    <a href="{{ url_for('products.delete', public_id=product.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="columns is-8 is-multiline">
+    {% for product in products_close_aos %}
+        <div class="column is-one-quarter">
+            <div style="border-color:orange;border-style: solid;border-width:thick" class="card product_container">
+                <div class="card-content">
+                    <div class="media-content">
+                        <p class="title is-4 has-text-dark">{{product.title}}</p>
+                    </div>
+                    <div class="content">
+                        <div>💰: {{product.price}}€</div>
+                        {% if product.stock <= 10 %}
+                        <div style="color:red">🚛: {{product.stock}} stk</div>
+                        {% else %}
+                        <div style="color:green">🚛: {{product.stock}} stk</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ url_for('products.edit', public_id=product.public_id) }}" class="card-footer-item">🖊️</a>
+                    <a href="{{ url_for('products.delete', public_id=product.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="columns is-8 is-multiline">
+    {% for product in products %}
+        <div class="column is-one-quarter">
+            <div style="border-style: solid;border-width:thick" class="card product_container">
+                <div class="card-content">
+                    <div class="media-content">
+                        <p class="title is-4 has-text-dark">{{product.title}}</p>
+                    </div>
+                    <div class="content">
+                        <div>💰: {{product.price}}€</div>
+                        {% if product.stock <= 10 %}
+                        <div style="color:red">🚛: {{product.stock}} stk</div>
+                        {% else %}
+                        <div style="color:green">🚛: {{product.stock}} stk</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ url_for('products.edit', public_id=product.public_id) }}" class="card-footer-item">🖊️</a>
+                    <a href="{{ url_for('products.delete', public_id=product.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="{{ url_for('orders.all') }}" class="title is-3">ORDERS:</a>
+
+<div class="columns is-8 is-multiline">
+    {% for order_date in orders_by_date %}
+    <p class="title is-4">{{order_date}}</p>
+        {% for order in orders_by_date[order_date] %}
+        <div class="column is-full">
+            <div class="card product_container">
+                <div class="card-content">
+                    <div class="media-content">
+                        {% if order.type == 0 %}
+                        <p><a href="{{ url_for('orders.one', public_id=order.public_id) }}" class="title is-4 has-text-dark">↙️ {{order.public_id}}</a></p>
+                        <p class="subtitle is-4 has-text-dark">📅 {{order.order_date }}</p>
+                        <p> 🚢: {{order.supplier.title}}</p>
+                        <p> total costs: -{{order.total_costs}}€ 📉
+                        <p> total amount: {{order.total_amount}} 📈
+                        {% else %}
+                        <p><a href="{{ url_for('orders.one', public_id=order.public_id) }}" class="title is-4 has-text-dark">↗️ {{order.public_id}}</a></p>
+                        <p class="subtitle is-4 has-text-dark">📅 {{order.order_date }}</p>
+                        <p> 🧍: {{order.customer}}</p>
+                        <p> total costs: +{{order.total_costs}}€ 📈
+                        <p> total amount: {{order.total_amount}} 📉
+                        {% endif %}
+                        
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    {% if order.type == 0 %}
+                        <a href="{{ url_for('orders.edit_supp', public_id=order.public_id) }}" class="card-footer-item">🖊️</a>
+                    {% elif order.type == 1 %}
+                        <a href="{{ url_for('orders.edit_cust', public_id=order.public_id) }}" class="card-footer-item">🖊️</a>
+                    {% endif %}
+                    <a href="{{ url_for('orders.delete', public_id=order.public_id) }}" class="card-footer-item">🗑️</a>
+                </footer>
+            </div>
+        </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+{% endblock %}

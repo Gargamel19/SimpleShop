@@ -161,6 +161,9 @@ class ProductTest(TestCase):
         
         assert Products.query.filter_by(public_id=public_id).count() == 0
 
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
 
 if __name__ == '__main__':
     unittest.main()

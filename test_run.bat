@@ -1,0 +1,1 @@
+python -m pytest . --cov=app --cov-report=lcov:coverage/coverage.lcov

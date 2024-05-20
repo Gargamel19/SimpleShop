@@ -26,6 +26,13 @@ def create_app(type="run"):
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 
+    @app.template_filter('strftime')
+    def _jinja2_filter_datetime(date, fmt=None):
+        date = dateutil.parser.parse(date)
+        native = date.replace(tzinfo=None)
+        format='%b %d, %Y'
+        return native.strftime(format) 
+
     db.init_app(app)
     font_awesome.init_app(app)
 

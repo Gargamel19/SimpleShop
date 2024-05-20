@@ -29,8 +29,9 @@
                                 <a href="{{ url_for('products.all') }}" class="navbar-item">
                                     Products                            
                                 </a>
-                                <a class="navbar-item">
+                                <a href="{{ url_for('orders.dashboard') }}" class="navbar-item">
                                     {{ user.name}}
+                                </a>
                                 </a>
                                 <a href="{{ url_for('user.index') }}" class="navbar-item">
                                     Home

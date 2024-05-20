@@ -9,7 +9,8 @@ from sqlalchemy.exc import IntegrityError
 from flask import render_template_string
 import uuid
 from functools import wraps
-
+from datetime import datetime
+from operator import itemgetter, attrgetter
 
 
 class NotAuthorized(exceptions.HTTPException):
@@ -43,15 +44,31 @@ orders_bp.register_error_handler(NotAuthorized, handle_error)
 
 ### USER ENDPOINTS
 
-@orders_bp.route('/all', methods=['GET'])
-def all():
-    orders = Orders.query.all()
-    orders_json = []
+@orders_bp.route('/dashboard', methods=['GET'])
+@login_required
+def dashboard():
+
+
+    products_aos = Products.query.order_by(Products.stock).filter(Products.stock<0).all()
+    products_close_aos = Products.query.order_by(Products.stock).filter(Products.stock<10, Products.stock>0).all()
+    products = Products.query.order_by(Products.stock).filter(Products.stock>10).all()
+
+
+
+    orders = Orders.query.order_by(Orders.order_date.desc()).limit(5).all()
+    orders_by_date = {}
     for order in orders:
         ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
         order_json = order.to_dict()
+        
+        temp_date = str(order.order_date.date())
+        if not temp_date in orders_by_date:
+            orders_by_date[temp_date] = []
         order_json["total_costs"] = 0
         order_json["total_amount"] = 0
+        date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
+        order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
+        print()
         if order.supplier:
             supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
             order_json["supplier"] = supplier.to_dict()
@@ -62,12 +79,89 @@ def all():
             order_json["total_amount"] += pos.amount
             new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
             ordersPOS_json.append(new_pos)
+        order_json["total_amount"] = round(order_json["total_amount"], 2)
+        order_json["total_costs"] = round(order_json["total_costs"], 2)
+        order_json["pos"] = ordersPOS_json
+        orders_by_date[temp_date].append(order_json)
+    return render_template("dashboard.html", user=current_user, orders_by_date=orders_by_date, products_aos=products_aos, products_close_aos=products_close_aos, products=products)
 
+
+@orders_bp.route('/all', methods=['GET'])
+@login_required
+def all():
+
+    order_query = Orders.query
+    if "customer" in request.args:
+        filter_value = request.args["customer"]
+        print(filter_value)
+        order_query=order_query.filter(Orders.customer.ilike(filter_value))
+    if "supplier" in request.args:
+        filter_value = request.args["supplier"]
+        print(filter_value)
+        order_query=order_query.filter(Orders.supplier.ilike(filter_value))
+    if "sort" in request.args:
+        sort_value = request.args["sort"]
+        if sort_value=="date":
+            order_query=order_query.order_by(Orders.order_date.desc())
+
+    orders = order_query.all()
+    orders_json = []
+    for order in orders:
+        ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
+        order_json = order.to_dict()
+        order_json["total_costs"] = 0
+        order_json["total_amount"] = 0
+        date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
+        order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
+        print()
+        if order.supplier:
+            supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
+            order_json["supplier"] = supplier.to_dict()
+        ordersPOS_json = []
+        for pos in ordersPOS:
+            new_pos = pos.to_dict()
+            order_json["total_costs"] += pos.costs
+            order_json["total_amount"] += pos.amount
+            new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
+            ordersPOS_json.append(new_pos)
+        order_json["total_amount"] = round(order_json["total_amount"], 2)
+        order_json["total_costs"] = round(order_json["total_costs"], 2)
         order_json["pos"] = ordersPOS_json
         orders_json.append(order_json)
 
 
     return render_template("orders.html", user=current_user, orders=orders_json)
+
+@orders_bp.route('/<public_id>/one', methods=['GET'])
+@login_required
+def one(public_id):
+    
+
+    order = Orders.query.filter(Orders.public_id==public_id).first()
+    order_json = []
+    ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
+    order_json = order.to_dict()
+    order_json["total_costs"] = 0
+    order_json["total_amount"] = 0
+    date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
+    order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
+    print()
+    if order.supplier:
+        supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
+        order_json["supplier"] = supplier.to_dict()
+    ordersPOS_json = []
+    for pos in ordersPOS:
+        new_pos = pos.to_dict()
+        order_json["total_costs"] += pos.costs
+        order_json["total_amount"] += pos.amount
+        new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
+        ordersPOS_json.append(new_pos)
+    order_json["total_amount"] = round(order_json["total_amount"], 2)
+    order_json["total_costs"] = round(order_json["total_costs"], 2)
+    order_json["pos"] = ordersPOS_json
+
+
+    return render_template("order.html", user=current_user, orders=[order_json])
 
 @orders_bp.route('/create_order_customer', methods=['GET', 'POST'])
 @login_required
@@ -186,23 +280,27 @@ def create_order():
     if current_user.user_type != 1:
         raise NotAuthorized()
     public_id = str(uuid.uuid4())
+    order_type = None
+    supplier = None
+    customer = None
     if "order_type" in request.form:
         order_type = int(request.form["order_type"])
     if "supplier" in request.form:
         supplier = request.form["supplier"]
     if "customer" in request.form:
         customer = request.form["customer"]
+    if not ((order_type==0 and supplier) or (order_type==1 and customer)):
+        abort(405)
     try:
         if order_type == 0:
-            order = Orders(public_id=public_id, supplier=supplier, type=order_type)
+            order = Orders(public_id=public_id, supplier=supplier, type=order_type, order_date=datetime.now())
             db.session.add(order)
             db.session.commit()
         else:
-            order = Orders(public_id=public_id, customer=customer, type=order_type)
+            order = Orders(public_id=public_id, customer=customer, type=order_type, order_date=datetime.now())
             db.session.add(order)
             db.session.commit()
     except IntegrityError:
-        print("OrderAlreadyExist")
         raise OrderAlreadyExist()
     return order.to_dict()
 
@@ -228,6 +326,8 @@ def edit_order(public_id, type=1):
     order = Orders.query.filter_by(public_id=public_id).first()
     if not order:
         raise OrderNOTExist()
+    customer = None
+    supplier = None
     # TODO: if forms are not given
     if "supplier" in request.form:
         supplier = request.form["supplier"]
@@ -235,6 +335,8 @@ def edit_order(public_id, type=1):
     if "customer" in request.form:
         customer = request.form["customer"]
         order.customer = customer
+    if not ((order.type == 0 and supplier) or (order.type == 1 and customer)):
+        abort(405)
     db.session.commit()
     return jsonify(order.to_dict())
 
@@ -267,7 +369,7 @@ def add_order_pos(public_id):
     if not product:
         raise ProductNOTExist()
     amount = request.form["amount"]
-    pos = OrdersPOS(public_id=OrdersPOS_id, order_id=public_id, product_id=product_id, costs=float(amount)*product.price, amount=amount)
+    pos = OrdersPOS(public_id=OrdersPOS_id, order_id=public_id, product_id=product_id, costs=round(float(amount)*product.price, 2), amount=amount)
 
     product = Products.query.filter(Products.public_id==pos.product_id).first()
     #supply order
@@ -310,7 +412,7 @@ def edit_order_pos(public_id, pos_id):
     amount = request.form["amount"]
     pos.product_id = product_id
     pos.amount = amount
-    pos.costs = float(amount)*product.price
+    pos.costs = round(float(amount)*product.price, 2)
 
     #supply order
     if order.type == 0:
