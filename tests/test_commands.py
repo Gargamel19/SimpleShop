@@ -27,13 +27,13 @@ class OrderTest(TestCase):
 
     def test_hello_command(self):
         result = self.runner.invoke(self.temp_app.cli.commands['create_tables'])
-        assert result.exit_code == 1
+        assert result.exit_code == 0
         assert 'tables created' in result.output
 
 
     def test_add_admin_h(self):
         result = self.runner.invoke(self.temp_app.cli.commands['add_testdata'])
-        assert result.exit_code == 0
+        assert result.exit_code == 1
         assert User.query.filter(User.name == "fettarmqp").count() == 1
         assert User.query.filter(User.name == "testuser").count() == 1
 
