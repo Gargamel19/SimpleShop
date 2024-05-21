@@ -11,7 +11,7 @@
             </div>
         {% endif %}
         {% endwith %}
-        <form method="POST" action="{{ url_for('orders.edit_cust', public_id=order.public_id) }}">
+        <form method="POST" action="{{ url_for('orders.edit_customer', public_id=order.public_id) }}">
             <div class="field">
                 <div class="control">
                     <input class="input is-large" type="text" name="customer" placeholder="Customer" autofocus="" value="{{order.customer}}">

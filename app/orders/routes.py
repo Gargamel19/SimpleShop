@@ -13,25 +13,60 @@ from datetime import datetime
 from operator import itemgetter, attrgetter
 
 
+def read_order_content(order):
+    '''
+    gets order positions of orders and gets products of orders positions.
+    also sums up all costs and amounts and returns a dict representation of the Order, OrderPOS and Products.
+    '''
+    ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
+    order_json = order.to_dict()
+    order_json["total_costs"] = 0
+    order_json["total_amount"] = 0
+    date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
+    order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
+    if order.supplier:
+        supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
+        order_json["supplier"] = supplier.to_dict()
+    ordersPOS_json = []
+    for pos in ordersPOS:
+        new_pos = pos.to_dict()
+        order_json["total_costs"] += pos.costs
+        order_json["total_amount"] += pos.amount
+        new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
+        ordersPOS_json.append(new_pos)
+    order_json["total_amount"] = round(order_json["total_amount"], 2)
+    order_json["total_costs"] = round(order_json["total_costs"], 2)
+    order_json["pos"] = ordersPOS_json
+    return order_json
+
+def recompute_stock(order, product, amount):
+    '''
+    recomputing the stock-values of an product.
+    '''
+    if order.type == 0:
+        product.stock = int(product.stock) + int(amount)
+    elif order.type == 1:
+        product.stock = int(product.stock) - int(amount)
+
 class NotAuthorized(exceptions.HTTPException):
     code = 405 
     description = 'User is not authorized to perform this action'
 
 class OrderNOTExist(exceptions.HTTPException):
     code = 404
-    description = 'Order dose not exist.'
+    description = 'Order not exist.'
     
 class OrderPosNOTExist(exceptions.HTTPException):
     code = 404
-    description = 'OrderPOS dose not exist.'
+    description = 'Order Position not exist.'
 
 class ProductNOTExist(exceptions.HTTPException):
     code = 404
-    description = 'Product dose not exist.'
+    description = 'Product not exist.'
 
 class OrderAlreadyExist(exceptions.HTTPException):
     code = 400
-    description = 'Order dose already exist.'
+    description = 'Order already exist.'
 
 @orders_bp.errorhandler(exceptions.HTTPException)
 def handle_error(e):
@@ -55,30 +90,10 @@ def dashboard():
     orders = Orders.query.order_by(Orders.order_date.desc()).limit(5).all()
     orders_by_date = {}
     for order in orders:
-        ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
-        order_json = order.to_dict()
-        
         temp_date = str(order.order_date.date())
         if not temp_date in orders_by_date:
             orders_by_date[temp_date] = []
-        order_json["total_costs"] = 0
-        order_json["total_amount"] = 0
-        date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
-        order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
-        print()
-        if order.supplier:
-            supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
-            order_json["supplier"] = supplier.to_dict()
-        ordersPOS_json = []
-        for pos in ordersPOS:
-            new_pos = pos.to_dict()
-            order_json["total_costs"] += pos.costs
-            order_json["total_amount"] += pos.amount
-            new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
-            ordersPOS_json.append(new_pos)
-        order_json["total_amount"] = round(order_json["total_amount"], 2)
-        order_json["total_costs"] = round(order_json["total_costs"], 2)
-        order_json["pos"] = ordersPOS_json
+        order_json = read_order_content(order)
         orders_by_date[temp_date].append(order_json)
     return render_template("dashboard.html", user=current_user, orders_by_date=orders_by_date, products_aos=products_aos, products_close_aos=products_close_aos, products=products)
 
@@ -88,13 +103,13 @@ def dashboard():
 def all():
 
     order_query = Orders.query
+
+    # filtering by 'customer' od 'supplier' and sorting by 'date' in query-argument 
     if "customer" in request.args:
         filter_value = request.args["customer"]
-        print(filter_value)
         order_query=order_query.filter(Orders.customer.ilike(filter_value))
     if "supplier" in request.args:
         filter_value = request.args["supplier"]
-        print(filter_value)
         order_query=order_query.filter(Orders.supplier.ilike(filter_value))
     if "sort" in request.args:
         sort_value = request.args["sort"]
@@ -104,26 +119,7 @@ def all():
     orders = order_query.all()
     orders_json = []
     for order in orders:
-        ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
-        order_json = order.to_dict()
-        order_json["total_costs"] = 0
-        order_json["total_amount"] = 0
-        date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
-        order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
-        print()
-        if order.supplier:
-            supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
-            order_json["supplier"] = supplier.to_dict()
-        ordersPOS_json = []
-        for pos in ordersPOS:
-            new_pos = pos.to_dict()
-            order_json["total_costs"] += pos.costs
-            order_json["total_amount"] += pos.amount
-            new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
-            ordersPOS_json.append(new_pos)
-        order_json["total_amount"] = round(order_json["total_amount"], 2)
-        order_json["total_costs"] = round(order_json["total_costs"], 2)
-        order_json["pos"] = ordersPOS_json
+        order_json = read_order_content(order)
         orders_json.append(order_json)
 
 
@@ -132,37 +128,13 @@ def all():
 @orders_bp.route('/<public_id>/one', methods=['GET'])
 @login_required
 def one(public_id):
-    
-
     order = Orders.query.filter(Orders.public_id==public_id).first()
-    order_json = []
-    ordersPOS = OrdersPOS.query.filter(OrdersPOS.order_id==order.public_id).all()
-    order_json = order.to_dict()
-    order_json["total_costs"] = 0
-    order_json["total_amount"] = 0
-    date = datetime.strptime(order_json["order_date"], '%Y-%m-%d %H:%M:%S')
-    order_json["order_date"] = date.strftime('%d.%m.%y %H:%M')
-    print()
-    if order.supplier:
-        supplier = Suppliers.query.filter(Suppliers.public_id==order.supplier).first()
-        order_json["supplier"] = supplier.to_dict()
-    ordersPOS_json = []
-    for pos in ordersPOS:
-        new_pos = pos.to_dict()
-        order_json["total_costs"] += pos.costs
-        order_json["total_amount"] += pos.amount
-        new_pos["product"] = Products.query.filter(Products.public_id==pos.product_id).first()
-        ordersPOS_json.append(new_pos)
-    order_json["total_amount"] = round(order_json["total_amount"], 2)
-    order_json["total_costs"] = round(order_json["total_costs"], 2)
-    order_json["pos"] = ordersPOS_json
-
-
+    order_json = read_order_content(order)
     return render_template("order.html", user=current_user, orders=[order_json])
 
 @orders_bp.route('/create_order_customer', methods=['GET', 'POST'])
 @login_required
-def create_cust():
+def create_customer():
     if request.method == "GET":
         return render_template("orders_customer_create.html", user=current_user)
     else:
@@ -171,7 +143,7 @@ def create_cust():
 
 @orders_bp.route('/create_order_supply', methods=['GET', 'POST'])
 @login_required
-def create_supp():
+def create_supplier():
     if request.method == "GET":
         supplier = Suppliers.query.all()
         return render_template("orders_supply_create.html", user=current_user, supplier=supplier)
@@ -182,7 +154,7 @@ def create_supp():
 
 @orders_bp.route('<public_id>/edit_order_supply', methods=['GET', 'POST'])
 @login_required
-def edit_supp(public_id):
+def edit_supplier(public_id):
     if request.method == "GET":
         supplier = Suppliers.query.all()
         order = Orders.query.filter_by(public_id=public_id).first()
@@ -194,7 +166,7 @@ def edit_supp(public_id):
 
 @orders_bp.route('<public_id>/edit_order_customer', methods=['GET', 'POST'])
 @login_required
-def edit_cust(public_id):
+def edit_customer(public_id):
     if request.method == "GET":
         order = Orders.query.filter_by(public_id=public_id).first()
         return render_template("orders_customer_edit.html", user=current_user, order=order)
@@ -213,6 +185,8 @@ def delete(public_id):
         delete_order(public_id)
         return redirect(url_for('orders.all'))
     
+
+##### POS #####
 
 @orders_bp.route('/<public_id>/positions/add', methods=['GET', 'POST'])
 @login_required
@@ -269,7 +243,7 @@ def get_orders():
 @orders_bp.route('/', methods=['POST'])
 @login_required
 def create_order():
-    print("HERE")
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     public_id = str(uuid.uuid4())
@@ -301,6 +275,7 @@ def create_order():
 @orders_bp.route('/<public_id>', methods=['GET'])
 def get_order(public_id):
     order = Orders.query.filter(Orders.public_id == public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     order_json = order.to_dict()
@@ -314,9 +289,11 @@ def get_order(public_id):
 @orders_bp.route('/<public_id>', methods=['PUT'])
 @login_required
 def edit_order(public_id, type=1):
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     customer = None
@@ -336,25 +313,35 @@ def edit_order(public_id, type=1):
 @orders_bp.route('/<public_id>', methods=['DELETE'])
 @login_required
 def delete_order(public_id):
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
+    # delete all pos of order
+    orderPos = OrdersPOS.query.filter_by(order_id=public_id).all()
+    for pos in orderPos:
+        product = Products.query.filter_by(public_id=pos.product_id).first()
+        recompute_stock(order, product, -pos.amount)
+        db.session.delete(pos)
     db.session.delete(order)
     db.session.commit()
     return jsonify(order.to_dict())
 
 
-##### POS 
+##### POS #####
 
 @orders_bp.route('/<public_id>/pos/add', methods=['PUT'])
 @login_required
 def add_order_pos(public_id):
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     OrdersPOS_id = str(uuid.uuid4())
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     product_id = request.form["product_id"]
@@ -365,11 +352,8 @@ def add_order_pos(public_id):
     pos = OrdersPOS(public_id=OrdersPOS_id, order_id=public_id, product_id=product_id, costs=round(float(amount)*product.price, 2), amount=amount)
 
     product = Products.query.filter(Products.public_id==pos.product_id).first()
-    #supply order
-    if order.type == 0:
-        product.stock = product.stock + int(pos.amount)
-    elif order.type == 1:
-        product.stock = product.stock - int(pos.amount)
+    
+    recompute_stock(order, product, amount)
 
     db.session.add(pos)
     db.session.commit()
@@ -378,6 +362,7 @@ def add_order_pos(public_id):
 @orders_bp.route('/<public_id>/pos/', methods=['GET'])
 def get_order_poss(public_id):
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     pos = OrdersPOS.query.filter_by(order_id = public_id).all()
@@ -390,13 +375,16 @@ def get_order_poss(public_id):
 @orders_bp.route('/<public_id>/pos/<pos_id>', methods=['PUT'])
 @login_required
 def edit_order_pos(public_id, pos_id):
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     pos = OrdersPOS.query.filter_by(public_id=pos_id).first()
-    if not order:
+    # OrderPOS of pos_id do not exist 
+    if not pos:
         raise OrderPosNOTExist()
     product_id = request.form["product_id"]
     product = Products.query.filter_by(public_id=product_id).first()
@@ -407,11 +395,7 @@ def edit_order_pos(public_id, pos_id):
     pos.amount = amount
     pos.costs = round(float(amount)*product.price, 2)
 
-    #supply order
-    if order.type == 0:
-        product.stock = product.stock - int(pos.amount)+int(amount)
-    elif order.type == 1:
-        product.stock = product.stock + int(pos.amount)-int(amount)
+    recompute_stock(order, product, int(pos.amount)+int(amount))
 
     db.session.commit()
     return jsonify(pos.to_dict())
@@ -419,10 +403,12 @@ def edit_order_pos(public_id, pos_id):
 @orders_bp.route('/<public_id>/pos/<pos_id>', methods=['GET'])
 def get_order_pos(public_id, pos_id):
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     pos = OrdersPOS.query.filter_by(public_id=pos_id).first()
-    if not order:
+    # OrderPOS of pos_id do not exist 
+    if not pos:
         raise OrderPosNOTExist()
     return jsonify(pos.to_dict())
 
@@ -430,22 +416,20 @@ def get_order_pos(public_id, pos_id):
 @orders_bp.route('/<public_id>/pos/<pos_id>', methods=['DELETE'])
 @login_required
 def delete_order_pos(public_id, pos_id):
+    # loged in user is not admin
     if current_user.user_type != 1:
         raise NotAuthorized()
     order = Orders.query.filter_by(public_id=public_id).first()
+    # Order of public_id do not exist 
     if not order:
         raise OrderNOTExist()
     pos = OrdersPOS.query.filter(OrdersPOS.public_id==pos_id).first()
+    # OrderPOS of pos_id do not exist 
     if not pos:
         raise OrderPosNOTExist()
     
     product = Products.query.filter(Products.public_id==pos.product_id).first()
-    #supply order
-    if order.type == 0:
-        product.stock = product.stock - int(pos.amount)
-    elif order.type == 1:
-        product.stock = product.stock + int(pos.amount)
-
+    recompute_stock(order, product, -int(pos.amount))
 
     db.session.delete(pos)
     db.session.commit()

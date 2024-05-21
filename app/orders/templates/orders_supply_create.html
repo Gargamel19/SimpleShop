@@ -11,7 +11,7 @@
             </div>
         {% endif %}
         {% endwith %}
-        <form method="POST" action="{{ url_for('orders.create_supp') }}">
+        <form method="POST" action="{{ url_for('orders.create_supplier') }}">
             <select name="supplier" class="selectpicker form-control input is-large">
                 {% for supp in supplier %}
                     <option value="{{ supp.public_id }}">{{supp.title}}</option>

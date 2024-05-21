@@ -11,7 +11,7 @@
             </div>
         {% endif %}
         {% endwith %}
-        <form method="POST" action="{{ url_for('orders.edit_supp', public_id=order.public_id) }}">
+        <form method="POST" action="{{ url_for('orders.edit_supplier', public_id=order.public_id) }}">
             <select name="supplier" class="selectpicker form-control input is-large">
                 {% for supp in supplier %}
                     {% if order.supplier == supp.public_id %}
