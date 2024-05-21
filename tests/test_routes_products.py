@@ -76,6 +76,9 @@ class ProductTest(TestCase):
         prod = Products(public_id=public_id, title="Leckere Schokoriegel", price= 3.5, stock= 10)
         db.session.add(prod)
         db.session.commit()
+        
+        response = self.client.get(f"/products/1")
+        assert response.status_code == 404
 
         response = self.client.get(f"/products/{public_id}")
         got_product = response.json
@@ -118,17 +121,24 @@ class ProductTest(TestCase):
         assert prev_prod.title == "Leckere Schokoriegel"
         assert prev_prod.price == 3.5
         assert prev_prod.stock == 10
+        
 
         response = self.client.put(f"/products/{public_id}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
-        
+
         after_prod = Products.query.filter_by(public_id=public_id).first()
         assert after_prod.title == "Leckere Schokoriegel 2"
         assert after_prod.price == 3
         assert after_prod.stock == 20
 
+        # Product not exists (FALUE)
+        response = self.client.put(f"/products/1", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 404
+
         # AS USER (FALUE)
         self.user_login()
+
+        
 
         response = self.client.put(f"/products/{public_id}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 405
@@ -156,8 +166,12 @@ class ProductTest(TestCase):
         # AS ADMIN (SUCC)
         self.admin_login()
 
-        response = self.client.delete(f"/products/{public_id}", headers={"Accept": "multipart/form-data"})
+        response = self.client.delete(f"/products/{public_id}")
         assert response.status_code == 200
+
+        
+        response = self.client.delete(f"/products/1")
+        assert response.status_code == 404
         
         assert Products.query.filter_by(public_id=public_id).count() == 0
 

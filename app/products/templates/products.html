@@ -4,6 +4,7 @@
 
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('products.static',filename='styles/products.css') }}">
 
+<a href="{{ url_for('products.all') }}" class="title is-3">Products:</a>
 <div class="columns is-8 is-multiline">
     {% for product in products %}
         <div class="column is-one-quarter">

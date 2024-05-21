@@ -134,6 +134,9 @@ class SuppliersTest(TestCase):
 
         prev_supp = Suppliers.query.filter_by(public_id=public_id).first()
         assert prev_supp.title == "Super Supplier"
+        
+        response = self.client.put(f"/suppliers/1", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 404
 
         response = self.client.put(f"/suppliers/{public_id}", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
@@ -162,7 +165,7 @@ class SuppliersTest(TestCase):
         # AS USER (FALUE)
         self.user_login()
 
-        response = self.client.delete(f"/suppliers/{public_id}", headers={"Accept": "multipart/form-data"})
+        response = self.client.delete(f"/suppliers/{public_id}")
         assert response.status_code == 405
         
         assert Suppliers.query.filter_by(public_id=public_id).count() == 1
@@ -170,8 +173,11 @@ class SuppliersTest(TestCase):
         # AS ADMIN (SUCC)
         self.admin_login()
 
-        response = self.client.delete(f"/suppliers/{public_id}", headers={"Accept": "multipart/form-data"})
+        response = self.client.delete(f"/suppliers/{public_id}")
         assert response.status_code == 200
+        
+        response = self.client.delete(f"/suppliers/1")
+        assert response.status_code == 404
         
         assert Suppliers.query.filter_by(public_id=public_id).count() == 0
 
@@ -186,16 +192,26 @@ class SuppliersTest(TestCase):
             "product_id": product1_persistent
         }
 
+        data2 = {
+            "product_id": "1"
+        }
+
         # AS ADMIN (SUCC)
         self.admin_login()
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
-
         response = self.client.put(f"/suppliers/{public_id}/product/add", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 200
         s_p = Suppliers_Products.query.filter_by(supplier_public_id=public_id).first()
-
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 1
+
+        # Supplier not found (FALUE)
+        response = self.client.put(f"/suppliers/1/product/add", data=data, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 404
+
+        # Product not found (FALUE)
+        response = self.client.put(f"/suppliers/{public_id}/product/add", data=data2, headers={"Accept": "multipart/form-data"})
+        assert response.status_code == 404
 
         db.session.delete(s_p)
 
@@ -203,10 +219,8 @@ class SuppliersTest(TestCase):
         self.user_login()
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
-        
         response = self.client.put(f"/suppliers/{public_id}/product/add", data=data, headers={"Accept": "multipart/form-data"})
         assert response.status_code == 405
-        
         assert Suppliers_Products.query.filter_by(supplier_public_id=public_id).count() == 0
 
 
@@ -223,21 +237,25 @@ class SuppliersTest(TestCase):
         self.user_login()
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
-
         response = self.client.delete(f"/suppliers/{supplier1_persistent}/product/{s_p.public_id}")
         assert response.status_code == 405
-
         assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
 
         # AS ADMIN (SUCC)
         self.admin_login()
 
         assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 1
-
         response = self.client.delete(f"/suppliers/{supplier1_persistent}/product/{s_p.public_id}")
         assert response.status_code == 200
-
         assert Suppliers_Products.query.filter_by(supplier_public_id=supplier1_persistent).count() == 0
+
+        # Supplier_Product not found (FALUE)
+        response = self.client.delete(f"/suppliers/{supplier1_persistent}/product/1")
+        assert response.status_code == 404
+        
+        # Supplier not found (FALUE)
+        response = self.client.delete(f"/suppliers/1/product/{s_p.public_id}")
+        assert response.status_code == 404
 
         db.session.delete(s_p)
 

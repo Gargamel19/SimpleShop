@@ -31,6 +31,7 @@ def handle_error(e):
 suppliers_bp.register_error_handler(SupplierNOTExist, handle_error)
 suppliers_bp.register_error_handler(SupplierAlreadyExist, handle_error)
 suppliers_bp.register_error_handler(NotAuthorized, handle_error)
+suppliers_bp.register_error_handler(ProductNOTExist, handle_error)
 
 
 ### USER ENDPOINTS
@@ -175,6 +176,8 @@ def delete_supplier(public_id):
     db.session.commit()
     return jsonify(supplier.to_dict())
 
+
+# SUPPLIERS PRODUCTS
 
 @suppliers_bp.route('/<public_id>/product/add', methods=['PUT'])
 @login_required
