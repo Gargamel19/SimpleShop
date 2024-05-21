@@ -8,7 +8,6 @@ from sqlalchemy.exc import IntegrityError
 import uuid
 
 
-
 class NotAuthorized(exceptions.HTTPException):
     code = 405 
     description = 'User is not authorized to perform this action'
