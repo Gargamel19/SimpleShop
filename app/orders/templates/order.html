@@ -42,7 +42,7 @@
                 </div>
                 <footer class="card-footer">
                     {% if order.type == 0 %}
-                        <a href="{{ url_for('orders.edit_suppier', public_id=order.public_id) }}" class="card-footer-item">🖊️</a>
+                        <a href="{{ url_for('orders.edit_supplier', public_id=order.public_id) }}" class="card-footer-item">🖊️</a>
                     {% elif order.type == 1 %}
                         <a href="{{ url_for('orders.edit_customer', public_id=order.public_id) }}" class="card-footer-item">🖊️</a>
                     {% endif %}

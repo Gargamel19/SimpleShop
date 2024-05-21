@@ -14,7 +14,7 @@ class User(db.Model, UserMixin, SerializerMixin):
     email = Column(String(100), nullable=False)
     password = Column(String(100), nullable=False)
     user_type = Column(Integer, nullable=False)
-
+    
 
 class Products(db.Model, SerializerMixin):
     __tablename__ = "product"

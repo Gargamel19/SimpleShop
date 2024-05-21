@@ -68,6 +68,10 @@ class OrderAlreadyExist(exceptions.HTTPException):
     code = 400
     description = 'Order already exist.'
 
+class AttributeMissing(exceptions.HTTPException):
+    code = 400
+    description = 'Attribute is missing.'
+
 @orders_bp.errorhandler(exceptions.HTTPException)
 def handle_error(e):
     return e.description, e.code
@@ -75,6 +79,7 @@ def handle_error(e):
 orders_bp.register_error_handler(OrderNOTExist, handle_error)
 orders_bp.register_error_handler(OrderAlreadyExist, handle_error)
 orders_bp.register_error_handler(NotAuthorized, handle_error)
+orders_bp.register_error_handler(AttributeMissing, handle_error)
 
 
 ### USER ENDPOINTS
@@ -348,6 +353,8 @@ def add_order_pos(public_id):
     product = Products.query.filter_by(public_id=product_id).first()
     if not product:
         raise ProductNOTExist()
+    if "amount" not in request.form or (not request.form["amount"]):
+        raise AttributeMissing()
     amount = request.form["amount"]
     pos = OrdersPOS(public_id=OrdersPOS_id, order_id=public_id, product_id=product_id, costs=round(float(amount)*product.price, 2), amount=amount)
 
